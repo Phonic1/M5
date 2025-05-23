@@ -1,0 +1,628 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Speed Sound Deck</title>
+    <style>
+        body {
+            font-family: 'Sassoon Primary', 'Comic Sans MS', Arial, sans-serif;
+            margin: 0;
+            background-color: #ffffff;
+            height: 100vh;
+            overflow: hidden;
+            touch-action: manipulation;
+        }
+
+        .watermark {
+            position: fixed;
+            bottom: 10px;
+            right: 10px;
+            font-size: 12px;
+            color: #6b7280;
+            opacity: 0.7;
+            font-family: 'Sassoon Primary', 'Comic Sans MS', Arial, sans-serif;
+            pointer-events: none;
+            z-index: 1000;
+        }
+
+        /* Speed Sound Deck Styles */
+        .speed-sound-deck {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+        }
+
+        .flashcard-container {
+            width: 100%;
+            height: 70%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            position: relative;
+        }
+
+        .flashcard {
+            width: 80vw;
+            height: 100vw;
+            max-width: 800px;
+            max-height: 1000px;
+            position: absolute;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background-color: #ffffff;
+            border: 1px solid #d2d2d7;
+            border-radius: 12px;
+            color: #1d1d1f;
+            text-align: center;
+            padding: 20px;
+            box-sizing: border-box;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+            user-select: none;
+            touch-action: none;
+            z-index: 1;
+            opacity: 1;
+        }
+
+        .flashcard.active {
+            z-index: 2;
+        }
+
+        .flashcard.fade-out {
+            animation: fadeOut 0.3s forwards;
+        }
+
+        .flashcard.fade-in {
+            animation: fadeIn 0.3s forwards;
+        }
+
+        @keyframes fadeOut {
+            0% { opacity: 1; }
+            100% { opacity: 0; }
+        }
+
+        @keyframes fadeIn {
+            0% { opacity: 0; }
+            100% { opacity: 1; }
+        }
+
+        .set-title {
+            font-size: 48px;
+            font-weight: bold;
+            color: #007aff;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100%;
+        }
+
+        .sound-text {
+            font-size: 288px;
+            font-weight: 500;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100%;
+            line-height: 1;
+        }
+
+        .nav-controls {
+            position: absolute;
+            left: 10px;
+            bottom: 60px;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            z-index: 3;
+        }
+
+        .set-controls {
+            position: absolute;
+            left: 10px;
+            top: 10px;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            z-index: 3;
+        }
+
+        .reset-control {
+            position: absolute;
+            left: 10px;
+            bottom: 10px;
+            z-index: 3;
+        }
+
+        .ssd-button {
+            width: 50px;
+            height: 50px;
+            cursor: pointer;
+            border: none;
+            border-radius: 8px;
+            font-family: 'Sassoon Primary', 'Comic Sans MS', Arial, sans-serif;
+            font-size: 24px;
+            font-weight: 500;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            transition: background-color 0.3s, transform 0.1s;
+        }
+
+        .set-controls .ssd-button {
+            width: 60px;
+            height: 40px;
+            font-size: 16px;
+            background-color: #34c759;
+            color: white;
+        }
+
+        .ssd-button:hover {
+            transform: translateY(-1px);
+        }
+
+        #prevBtn {
+            background-color: #ff9500;
+            color: white;
+        }
+
+        #nextBtn {
+            background-color: #007aff;
+            color: white;
+        }
+
+        #resetBtn { /* For SSD Reset */
+            background-color: #af52de;
+            color: white;
+            width: 60px;
+            height: 40px;
+            font-size: 16px;
+        }
+        
+        /* Responsive Styles for Speed Sound Deck */
+        @media (max-width: 768px) {
+            .flashcard-container {
+                height: 60%;
+            }
+            .sound-text {
+                font-size: 192px;
+            }
+            .set-title {
+                font-size: 36px;
+            }
+            .ssd-button {
+                width: 40px;
+                height: 40px;
+                font-size: 20px;
+            }
+            .set-controls .ssd-button {
+                width: 50px;
+                height: 30px;
+                font-size: 14px;
+            }
+            #resetBtn { /* For SSD Reset */
+                width: 50px;
+                height: 30px;
+                font-size: 14px;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .flashcard-container {
+                height: 50%;
+            }
+            .sound-text {
+                font-size: 144px;
+            }
+            .set-title {
+                font-size: 24px;
+            }
+            .ssd-button {
+                width: 35px;
+                height: 35px;
+                font-size: 18px;
+            }
+            .set-controls .ssd-button {
+                width: 45px;
+                height: 25px;
+                font-size: 12px;
+            }
+            #resetBtn { /* For SSD Reset */
+                width: 45px;
+                height: 25px;
+                font-size: 12px;
+            }
+        }
+        .hidden { /* Kept for potential dynamic use within SSD if needed */
+            display: none !important;
+        }
+    </style>
+</head>
+<body>
+    <div id="speedSoundDeck" class="speed-sound-deck"> <!-- No 'hidden' class -->
+        <div class="flashcard-container" id="flashcardContainer">
+            <div class="flashcard active" id="currentCard"></div>
+        </div>
+        <div class="set-controls">
+            <button id="set1Btn" class="ssd-button">Set 1</button>
+            <button id="set2Btn" class="ssd-button">Set 2</button>
+            <button id="set3Btn" class="ssd-button">Set 3</button>
+            <button id="homeBtnSSD" class="ssd-button" style="background-color: #ff3b30;">Reset Deck</button> <!-- Changed text & function -->
+        </div>
+        <div class="nav-controls">
+            <button id="prevBtn" class="ssd-button">←</button>
+            <button id="nextBtn" class="ssd-button">→</button>
+        </div>
+        <div class="reset-control">
+            <button id="resetBtn" class="ssd-button">Reset Card</button> <!-- Changed text for clarity -->
+        </div>
+    </div>
+
+    <div class="watermark">Scott Clee dev ©</div>
+
+    <script>
+        // --- Speed Sound Deck Logic ---
+        const sets = [
+            {
+                name: "Set 1",
+                sounds: [
+                    "a", "e", "i", "o", "u",
+                    "m", "s", "d", "t", "n", "p", "g", "c", "k", "b", "f",
+                    "l", "h", "r", "j", "v", "y", "w", "z", "x", "sh", "th",
+                    "ch", "qu", "ng", "nk"
+                ]
+            },
+            {
+                name: "Set 2",
+                sounds: ["ay", "ee", "igh", "ow", "oo", "oo", "ar", "or", "air", "ir", "ou", "oy"]
+            },
+            {
+                name: "Set 3",
+                sounds: [
+                    "ea", "oi", "a-e", "i-e", "o-e", "u-e", "aw", "are", "ur", "er",
+                    "ow", "ai", "oa", "ew", "ire", "ear", "ure", "tion", "tious/cious"
+                ]
+            }
+        ];
+        let currentSetIndex = 0;
+        let currentSoundIndex = 0;
+        let showingSetTitle = true;
+        let cardHistory = [];
+        let isTransitioning = false;
+        let ssdInitialized = false;
+
+        function initializeSpeedSoundDeck() {
+            if (ssdInitialized) {
+                 updateCard();
+                 return;
+            }
+            cardHistory = [{ setIndex: 0, soundIndex: 0, isSetTitle: true }];
+            updateCard();
+
+            document.getElementById('prevBtn').addEventListener('click', prevCard);
+            document.getElementById('prevBtn').addEventListener('touchstart', (e) => {e.preventDefault(); prevCard(e);}, { passive: false });
+            
+            document.getElementById('nextBtn').addEventListener('click', nextCard);
+            document.getElementById('nextBtn').addEventListener('touchstart', (e) => {e.preventDefault(); nextCard(e);}, { passive: false });
+            
+            document.getElementById('resetBtn').addEventListener('click', resetCurrentCardView); // Renamed function for clarity
+            document.getElementById('resetBtn').addEventListener('touchstart', (e) => {e.preventDefault(); resetCurrentCardView(e);}, { passive: false });
+            
+            document.getElementById('set1Btn').addEventListener('click', () => goToSet(0));
+            document.getElementById('set1Btn').addEventListener('touchstart', (e) => {e.preventDefault(); goToSet(0);}, { passive: false });
+            
+            document.getElementById('set2Btn').addEventListener('click', () => goToSet(1));
+            document.getElementById('set2Btn').addEventListener('touchstart', (e) => {e.preventDefault(); goToSet(1);}, { passive: false });
+            
+            document.getElementById('set3Btn').addEventListener('click', () => goToSet(2));
+            document.getElementById('set3Btn').addEventListener('touchstart', (e) => {e.preventDefault(); goToSet(2);}, { passive: false });
+
+            // Home button (now "Reset Deck")
+            document.getElementById('homeBtnSSD').addEventListener('click', resetDeckToStart);
+            document.getElementById('homeBtnSSD').addEventListener('touchstart', (e) => {e.preventDefault(); resetDeckToStart(e);}, { passive: false });
+
+            document.addEventListener('keydown', handleSSDKeyPress);
+            ssdInitialized = true;
+        }
+
+        function handleSSDKeyPress(e) {
+            // Check if any input field is focused, if so, don't navigate cards
+            if (document.activeElement && (document.activeElement.tagName === 'INPUT' || document.activeElement.tagName === 'TEXTAREA' || document.activeElement.isContentEditable)) {
+                return;
+            }
+            if (e.key === 'ArrowLeft') {
+                prevCard(e);
+            } else if (e.key === 'ArrowRight') {
+                nextCard(e);
+            }
+        }
+
+        function handleCardClick(e) {
+            e.preventDefault();
+            nextCard(e);
+        }
+
+        function handleCardTap(e) {
+            e.preventDefault();
+            const card = document.getElementById('currentCard');
+            if (!card) return;
+            const rect = card.getBoundingClientRect();
+            const tapX = e.touches[0].clientX - rect.left;
+            const cardWidth = rect.width;
+
+            if (tapX < cardWidth / 2) {
+                prevCard(e);
+            } else {
+                nextCard(e);
+            }
+        }
+
+        function updateCard() {
+            let currentCard = document.getElementById('currentCard');
+            if (!currentCard) {
+                console.error('Current card element not found');
+                const container = document.getElementById('flashcardContainer');
+                if (container && !container.querySelector('.flashcard')) {
+                     const newCardElement = createNewCard();
+                     if (newCardElement) {
+                         currentCard = newCardElement;
+                     } else {
+                        return;
+                     }
+                } else if (!container) {
+                    return;
+                }
+            }
+
+            currentCard.innerHTML = '';
+            currentCard.removeEventListener('click', handleCardClick);
+            currentCard.removeEventListener('touchstart', handleCardTap);
+
+            if (showingSetTitle) {
+                const titleSpan = document.createElement('span');
+                titleSpan.className = 'set-title';
+                titleSpan.textContent = sets[currentSetIndex].name;
+                currentCard.appendChild(titleSpan);
+            } else {
+                const soundSpan = document.createElement('span');
+                soundSpan.className = 'sound-text';
+                const sound = sets[currentSetIndex].sounds[currentSoundIndex];
+                soundSpan.textContent = sound;
+                currentCard.appendChild(soundSpan);
+            }
+
+            currentCard.addEventListener('click', handleCardClick);
+            currentCard.addEventListener('touchstart', handleCardTap, { passive: false });
+        }
+
+        function createNewCard() {
+            const container = document.getElementById('flashcardContainer');
+            if (!container) {
+                console.error('Flashcard container not found');
+                return null;
+            }
+            const existingCard = container.querySelector('#currentCard');
+            if (existingCard) {
+                existingCard.remove();
+            }
+
+            const newCard = document.createElement('div');
+            newCard.className = 'flashcard active fade-in';
+            newCard.id = 'currentCard';
+            container.appendChild(newCard);
+            return newCard;
+        }
+
+        function goToSet(setIndex) {
+            if (isTransitioning) return;
+            isTransitioning = true;
+
+            let currentCard = document.getElementById('currentCard');
+            if (!currentCard) {
+                console.warn("goToSet: currentCard not found, attempting to create.");
+                const newCreatedCard = createNewCard();
+                if(!newCreatedCard) { isTransitioning = false; return; }
+                currentCard = newCreatedCard;
+                currentSetIndex = setIndex;
+                currentSoundIndex = 0;
+                showingSetTitle = true;
+                cardHistory.push({ setIndex: currentSetIndex, soundIndex: currentSoundIndex, isSetTitle: showingSetTitle });
+                updateCard();
+                isTransitioning = false;
+                return;
+            }
+
+            currentCard.classList.remove('active');
+            currentCard.classList.add('fade-out');
+
+            setTimeout(() => {
+                currentCard.remove();
+                currentSetIndex = setIndex;
+                currentSoundIndex = 0;
+                showingSetTitle = true;
+
+                cardHistory.push({ setIndex: currentSetIndex, soundIndex: currentSoundIndex, isSetTitle: showingSetTitle });
+                const newCardElement = createNewCard();
+                if (newCardElement) updateCard();
+                isTransitioning = false;
+            }, 300);
+        }
+
+        function nextCard(e) {
+            if (e) e.preventDefault();
+            if (isTransitioning) return;
+            isTransitioning = true;
+
+            let currentCard = document.getElementById('currentCard');
+            let cardWasRecreated = false;
+            if (!currentCard) {
+                console.warn("nextCard: currentCard not found, attempting to create.");
+                const newCreatedCard = createNewCard();
+                if(!newCreatedCard) { isTransitioning = false; return; }
+                currentCard = newCreatedCard;
+                cardWasRecreated = true;
+            } else {
+                 currentCard.classList.remove('active');
+                 currentCard.classList.add('fade-out');
+            }
+
+            setTimeout(() => {
+                if (!cardWasRecreated && currentCard && currentCard.classList.contains('fade-out')) {
+                    currentCard.remove();
+                }
+                if (showingSetTitle) {
+                    showingSetTitle = false;
+                    currentSoundIndex = 0;
+                } else {
+                    currentSoundIndex++;
+                    if (currentSoundIndex >= sets[currentSetIndex].sounds.length) {
+                        currentSetIndex++;
+                        if (currentSetIndex >= sets.length) {
+                            currentSetIndex = 0; // Loop back to Set 1 title
+                        }
+                        currentSoundIndex = 0;
+                        showingSetTitle = true;
+                    }
+                }
+
+                cardHistory.push({ setIndex: currentSetIndex, soundIndex: currentSoundIndex, isSetTitle: showingSetTitle });
+                if (cardWasRecreated) {
+                    updateCard();
+                } else {
+                    const newCardElement = createNewCard();
+                    if (newCardElement) updateCard();
+                }
+                isTransitioning = false;
+            }, cardWasRecreated ? 0 : 300);
+        }
+
+        function prevCard(e) {
+            if (e) e.preventDefault();
+            if (isTransitioning || cardHistory.length <= 1) {
+                isTransitioning = false;
+                return;
+            }
+            isTransitioning = true;
+
+            let currentCard = document.getElementById('currentCard');
+            let cardWasRecreated = false;
+             if (!currentCard) {
+                console.warn("prevCard: currentCard not found, attempting to create.");
+                const newCreatedCard = createNewCard();
+                if(!newCreatedCard) { isTransitioning = false; return; }
+                currentCard = newCreatedCard;
+                cardWasRecreated = true;
+            } else {
+                currentCard.classList.remove('active');
+                currentCard.classList.add('fade-out');
+            }
+
+            setTimeout(() => {
+                if (!cardWasRecreated && currentCard && currentCard.classList.contains('fade-out')) {
+                    currentCard.remove();
+                }
+                cardHistory.pop();
+                const previousState = cardHistory[cardHistory.length - 1];
+                currentSetIndex = previousState.setIndex;
+                currentSoundIndex = previousState.soundIndex;
+                showingSetTitle = previousState.isSetTitle;
+
+                if (cardWasRecreated) {
+                    updateCard();
+                } else {
+                    const newCardElement = createNewCard();
+                    if (newCardElement) updateCard();
+                }
+                isTransitioning = false;
+            }, cardWasRecreated ? 0 : 300);
+        }
+
+        function resetCurrentCardView(e) { // Resets to the title of the current set
+            if (e) e.preventDefault();
+            if (isTransitioning) return;
+            isTransitioning = true;
+
+            let currentCard = document.getElementById('currentCard');
+            let cardWasRecreated = false;
+            if (!currentCard) {
+                 console.warn("resetCurrentCardView: currentCard not found, attempting to create.");
+                const newCreatedCard = createNewCard();
+                if(!newCreatedCard) { isTransitioning = false; return; }
+                currentCard = newCreatedCard;
+                cardWasRecreated = true;
+            } else {
+                currentCard.classList.remove('active');
+                currentCard.classList.add('fade-out');
+            }
+
+            setTimeout(() => {
+                 if (!cardWasRecreated && currentCard && currentCard.classList.contains('fade-out')) {
+                    currentCard.remove();
+                }
+                // Reset to the title card of the current set
+                showingSetTitle = true;
+                currentSoundIndex = 0; // Index within sounds array, not relevant for set title
+                
+                // Adjust cardHistory: remove entries until we are at a set title or beginning
+                while(cardHistory.length > 1 && (!cardHistory[cardHistory.length-1].isSetTitle || cardHistory[cardHistory.length-1].setIndex !== currentSetIndex)) {
+                    cardHistory.pop();
+                }
+                // If current state isn't the desired one after popping, push the correct one
+                if (cardHistory.length === 0 || cardHistory[cardHistory.length-1].setIndex !== currentSetIndex || !cardHistory[cardHistory.length-1].isSetTitle) {
+                     cardHistory.push({ setIndex: currentSetIndex, soundIndex: 0, isSetTitle: true });
+                }
+
+
+                if (cardWasRecreated) {
+                    updateCard();
+                } else {
+                    const newCardElement = createNewCard();
+                    if (newCardElement) updateCard();
+                }
+                isTransitioning = false;
+            }, cardWasRecreated ? 0 : 300);
+        }
+
+        function resetDeckToStart(e) { // Resets to the very beginning (Set 1 Title)
+            if (e) e.preventDefault();
+            if (isTransitioning) return;
+            isTransitioning = true;
+
+            let currentCard = document.getElementById('currentCard');
+            let cardWasRecreated = false;
+            if (!currentCard) {
+                 console.warn("resetDeckToStart: currentCard not found, attempting to create.");
+                const newCreatedCard = createNewCard();
+                if(!newCreatedCard) { isTransitioning = false; return; }
+                currentCard = newCreatedCard;
+                cardWasRecreated = true;
+            } else {
+                currentCard.classList.remove('active');
+                currentCard.classList.add('fade-out');
+            }
+             setTimeout(() => {
+                 if (!cardWasRecreated && currentCard && currentCard.classList.contains('fade-out')) {
+                    currentCard.remove();
+                }
+                currentSetIndex = 0;
+                currentSoundIndex = 0;
+                showingSetTitle = true;
+                cardHistory = [{ setIndex: 0, soundIndex: 0, isSetTitle: true }];
+
+                if (cardWasRecreated) {
+                    updateCard();
+                } else {
+                    const newCardElement = createNewCard();
+                    if (newCardElement) updateCard();
+                }
+                isTransitioning = false;
+            }, cardWasRecreated ? 0 : 300);
+        }
+
+        // Initialize Speed Sound Deck on load
+        initializeSpeedSoundDeck();
+    </script>
+</body>
+</html>

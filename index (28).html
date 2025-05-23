@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>M5 Literacy Suite - Welcome</title>
+    <style>
+        body {
+            font-family: 'Sassoon Primary', 'Comic Sans MS', Arial, sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            margin: 0;
+            background-color: #ffffff;
+            padding: 20px;
+            box-sizing: border-box;
+        }
+        .container {
+            text-align: center;
+            width: 100%;
+        }
+        h1 {
+            color: #1d1d1f;
+            font-size: 48px;
+            font-weight: bold;
+            margin-bottom: 50px;
+            text-align: center;
+        }
+        .app-links {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 25px;
+        }
+        .app-links a {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            width: 300px;
+            height: 70px;
+            padding: 0 20px;
+            border-radius: 8px;
+            color: white;
+            text-decoration: none;
+            font-size: 26px;
+            font-weight: 500;
+            font-family: 'Sassoon Primary', 'Comic Sans MS', Arial, sans-serif;
+            text-align: center;
+            border: none;
+            cursor: pointer;
+            transition: background-color 0.3s, transform 0.1s;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        .app-links a:hover {
+            transform: translateY(-2px);
+            filter: brightness(90%);
+        }
+
+        /* Specific button colors */
+        .app-links a.speed-sounds-btn {
+            background-color: #007aff; /* Blue */
+        }
+        .app-links a.blending-board-btn {
+            background-color: #34c759; /* Green */
+        }
+        .app-links a.sound-matching-btn {
+            background-color: #af52de; /* Purple */
+        }
+        .app-links a.sign-in-btn {
+            background-color: #ff9500; /* Orange */
+        }
+
+        /* Responsive adjustments */
+        @media (max-width: 768px) {
+            h1 {
+                font-size: 36px;
+                margin-bottom: 30px;
+            }
+            .app-links a {
+                width: 250px;
+                height: 60px;
+                font-size: 22px;
+            }
+        }
+        @media (max-width: 480px) {
+            h1 {
+                font-size: 28px;
+            }
+            .app-links a {
+                width: 90%;
+                max-width: 220px;
+                height: 55px;
+                font-size: 18px;
+            }
+            .app-links {
+                gap: 15px;
+                width: 100%;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>M5 Literacy Suite</h1>
+        <div class="app-links">
+            <a href="speed_sounds.html" class="speed-sounds-btn">Speed Sound Deck</a>
+            <a href="m5_blending_board.html" class="blending-board-btn">M5 Blending Board</a>
+            <a href="M5 Sound Matching Board.html" class="sound-matching-btn">M5 Sound Matching Board</a>
+            <a href="student_sign_in.html" class="sign-in-btn">Student Sign-In</a>
+        </div>
+    </div>
+</body>
+</html>
