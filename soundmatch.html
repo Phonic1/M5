@@ -1,0 +1,740 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0" />
+<title>Initial Sound Match — A–Z (Emoji/SVG) — Upgraded</title>
+<style>
+  /* ================================
+     Theme tokens
+  =================================*/
+  :root{
+    --ink:#111827;
+    --muted:#6b7280;
+    --panel:#ffffff;
+    --line:#d1d5db;
+    --brand:#007aff;
+    --good:#34c759;
+    --bad:#ff3b30;
+    --bg:#ffffff;
+    --shadow:0 2px 6px rgba(0,0,0,.08);
+    --radius:14px;
+    --edge-size:18px;
+    --teacher-min:220px;
+    --teacher-max:640px;
+    --teacher-default:28rem;
+  }
+
+  html,body{height:100%}
+  body{
+    margin:0;
+    background:var(--bg);
+    color:var(--ink);
+    /* Primary-school-friendly font stack with single-storey “a” where available */
+    font-family:"Sassoon Primary", Andika, "Chalkboard SE", "Comic Sans MS", "Segoe Print", "Arial Rounded MT Bold", system-ui, -apple-system, Arial, sans-serif;
+    -webkit-font-smoothing:antialiased;
+    overflow:hidden;
+    touch-action:manipulation;
+  }
+
+  /* ================================
+     Layout with collapsible + resizable setup panel
+  =================================*/
+  .app{
+    height:100vh;
+    display:flex;
+    position:relative;
+  }
+
+  aside.teacher{
+    width:var(--teacher-default);
+    max-width:35vw;
+    min-width:var(--teacher-min);
+    border-right:1px solid var(--line);
+    background:var(--panel);
+    padding:16px;
+    overflow:auto;
+    transition: transform .35s ease, width .35s ease, min-width .35s ease, padding .35s ease;
+    z-index:2;
+    transform: translateX(0);
+  }
+
+  /* resizer/dragbar between panels */
+  .dragbar{
+    width:6px;
+    cursor:col-resize;
+    background:linear-gradient(90deg, transparent 0%, rgba(0,0,0,.06) 50%, transparent 100%);
+    position:relative;
+    z-index:3;
+    transition: width .35s ease;
+  }
+  .dragbar:after{
+    content:"";
+    position:absolute; inset:0;
+    background:repeating-linear-gradient( to bottom, rgba(0,0,0,.12), rgba(0,0,0,.12) 1px, transparent 1px, transparent 4px);
+    opacity:.25;
+    pointer-events:none;
+  }
+
+  main.student{
+    flex:1;
+    background:#fff;
+    padding:20px;
+    overflow:auto;
+    position:relative;
+    z-index:1;
+  }
+
+  /* Slide-hide behaviour */
+  .edge-tab{
+    position:absolute;
+    left:0; top:50%;
+    transform:translate(-50%,-50%);
+    background:var(--brand);
+    color:#fff;
+    padding:8px 10px;
+    border-radius:10px;
+    font-weight:700;
+    box-shadow:var(--shadow);
+    writing-mode:vertical-rl;
+    text-orientation:mixed;
+    cursor:pointer;
+    z-index:4;
+    transition:opacity .25s ease, transform .35s ease;
+  }
+  .edge-tab:focus{ outline:2px solid #000; outline-offset:2px; }
+
+  .app.collapsed aside.teacher{
+    width:0;
+    min-width:0;
+    padding:0;
+    border:0;
+    transform:translateX(-100%);
+    overflow:hidden;
+  }
+  .app.collapsed .dragbar{
+    width:0;
+    pointer-events:none;
+    opacity:.2;
+  }
+  .app.collapsed .edge-tab{
+    transform:translate(-30%,-50%);
+  }
+
+  /* Headering & controls */
+  h1{ font-size:clamp(22px,2.4vw,40px); margin:0 0 10px; text-align:center; }
+  h2{ font-size:16px; margin:18px 0 8px; }
+  label{ font-size:14px; color:#111827; display:block; margin-bottom:4px; }
+  select, input[type="number"], input[type="text"]{
+    width:100%; padding:10px 12px; border:1px solid var(--line); border-radius:10px;
+    font-size:14px; background:#fff;
+  }
+  .btn{
+    width:100%; padding:12px 14px; border:none; border-radius:10px; color:#fff; font-weight:700; cursor:pointer;
+    box-shadow:var(--shadow); transition:transform .06s ease;
+  }
+  .btn:active{ transform:translateY(1px) }
+  .btn-primary{ background:var(--brand) }
+  .btn-worksheet{ background:#34c759 }
+  .btn-export{ background:#ff9500 }
+  .btn-clear{ background:#6b7280 }
+  .row{ display:grid; grid-template-columns:1fr 1fr; gap:10px; }
+  .toolbar{ display:grid; grid-template-columns:repeat(2,1fr); gap:10px; margin-top:12px; }
+  .muted{ color:var(--muted); font-size:13px; }
+  .divider{ height:1px; background:var(--line); margin:14px 0; }
+
+  /* Workspace */
+  .target-area{ margin:12px auto 8px; max-width:760px; display:grid; grid-template-columns:1fr; gap:12px; place-items:center; }
+  .flashcard{ width:160px; height:160px; border:1px solid var(--line); border-radius:12px; display:grid; place-items:center; font-size:80px; background:#fff; box-shadow:var(--shadow); user-select:none; touch-action:none; }
+  .letter{ font-size:70px; font-weight:900; }
+  .dropzone{
+    width:300px; height:100px; border:2px dashed #c7c7cc; border-radius:16px; display:grid; place-items:center;
+    color:var(--muted); font-size:18px; background:#fff; text-align:center;
+  }
+  .dropzone.good{ background:#e6ffed; border-color:var(--good); }
+  .dropzone.bad{ background:#ffebee; border-color:var(--bad); }
+  .statusline{ font-size:14px; color:var(--muted); margin-top:6px; text-align:center; }
+
+  .picture-grid{ display:grid; grid-template-columns:repeat(3, minmax(220px, 1fr)); gap:18px; align-items:stretch; margin:16px auto 0; max-width:1000px; }
+  .card{ border:1px solid var(--line); border-radius:var(--radius); background:#fff; box-shadow:var(--shadow); overflow:hidden; display:flex; flex-direction:column; min-height:260px; }
+  .card .imgbox{ flex:1; display:grid; place-items:center; background:#f8fafc; position:relative; }
+  .emoji{ font-size:120px; line-height:1; filter:drop-shadow(0 1px 0 rgba(0,0,0,.06)); user-select:none; }
+  .fallback svg{ width:90%; height:90%; display:block; }
+  .card .label{ padding:10px 12px; border-top:1px solid var(--line); font-size:20px; text-align:center; background:#fff; user-select:none; }
+  .draggable{ cursor:grab }
+  .draggable:active{ cursor:grabbing }
+
+  /* NEW: Speaker button for text-to-speech */
+  .speaker-btn {
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    width: 40px;
+    height: 40px;
+    background: rgba(255, 255, 255, 0.8);
+    border: 1px solid var(--line);
+    border-radius: 50%;
+    display: grid;
+    place-items: center;
+    font-size: 20px;
+    cursor: pointer;
+    backdrop-filter: blur(2px);
+    transition: background .2s ease, transform .1s ease;
+    z-index: 10;
+    -webkit-appearance: none;
+    appearance: none;
+    padding: 0;
+  }
+  .speaker-btn:hover { background: rgba(255, 255, 255, 1); }
+  .speaker-btn:active { transform: scale(0.9); }
+
+
+  @keyframes shake{
+    0%,100%{ transform:translateX(0) }
+    20%{ transform:translateX(-6px) }
+    40%{ transform:translateX(6px) }
+    60%{ transform:translateX(-4px) }
+    80%{ transform:translateX(4px) }
+  }
+  .shake{ animation:shake .35s }
+
+  .overlay{ position:absolute; inset:0; background:rgba(0,0,0,.55); display:none; align-items:center; justify-content:center; z-index:50; }
+  .sheet{ width:min(680px,92vw); background:#fff; border-radius:16px; box-shadow:0 10px 30px rgba(0,0,0,.2); padding:20px; }
+  .sheet h3{ margin:0 0 10px; font-size:22px }
+  .summary-grid{ display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-top:10px }
+
+  /* Toggle button inside panel header */
+  .panel-actions{
+    margin-bottom:10px;
+  }
+
+  /* Make tab only visible when collapsed, but keep it clickable at all times near the left edge */
+  .edge-tab{ opacity:0; pointer-events:none; }
+  .app.collapsed .edge-tab{ opacity:1; pointer-events:auto; }
+
+  /* Better touch targets on small screens */
+  @media (max-width:900px){
+    .picture-grid{ grid-template-columns:repeat(2, minmax(160px,1fr)); gap:12px; }
+    aside.teacher{ max-width:85vw; }
+  }
+
+  /* NEW: Toggle Switch Styles */
+  .toggle-container {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding-top: 20px; /* Aligns with other inputs */
+  }
+  .switch {
+    position: relative;
+    display: inline-block;
+    width: 50px;
+    height: 28px;
+  }
+  .switch input {
+    opacity: 0;
+    width: 0;
+    height: 0;
+  }
+  .slider {
+    position: absolute;
+    cursor: pointer;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: #ccc;
+    -webkit-transition: .4s;
+    transition: .4s;
+  }
+  .slider:before {
+    position: absolute;
+    content: "";
+    height: 22px;
+    width: 22px;
+    left: 3px;
+    bottom: 3px;
+    background-color: white;
+    -webkit-transition: .4s;
+    transition: .4s;
+  }
+  input:checked + .slider {
+    background-color: var(--good); /* Use theme green color */
+  }
+  input:focus + .slider {
+    box-shadow: 0 0 1px var(--good);
+  }
+  input:checked + .slider:before {
+    -webkit-transform: translateX(22px);
+    -ms-transform: translateX(22px);
+    transform: translateX(22px);
+  }
+  .slider.round {
+    border-radius: 28px;
+  }
+  .slider.round:before {
+    border-radius: 50%;
+  }
+
+</style>
+</head>
+<body>
+<div class="app" role="application" aria-label="Initial Sound Matching A-Z" id="app">
+  <aside class="teacher" id="teacherPanel" aria-label="Teacher Controls">
+    <div class="panel-actions">
+      <button class="btn btn-primary" id="hidePanelBtn" aria-controls="teacherPanel" aria-expanded="true" title="Hide setup (Tab to edge label to reopen)">Hide Setup</button>
+    </div>
+    <h2>Setup</h2>
+    <div class="row">
+      <div>
+        <label for="studentName">Student</label>
+        <input id="studentName" type="text" placeholder="e.g., Jake" autocomplete="off" />
+      </div>
+      <div>
+        <label for="targetSound">Target sound</label>
+        <select id="targetSound" aria-label="Target sound"></select>
+      </div>
+    </div>
+    <div class="row">
+      <div>
+        <label for="attemptsCount">Attempts per sound</label>
+        <input id="attemptsCount" type="number" min="3" max="15" value="10" />
+      </div>
+      <div>
+        <label for="showWordLabels">Word labels</label>
+        <select id="showWordLabels">
+          <option value="on" selected>On</option>
+          <option value="off">Off</option>
+        </select>
+      </div>
+    </div>
+    <div class="row">
+      <div>
+        <label for="imageMode">Image mode</label>
+        <select id="imageMode">
+          <option value="emoji" selected>Emoji</option>
+          <option value="fallback">Fallback SVG</option>
+        </select>
+      </div>
+      <div>
+        <label>Image Options (2 or 3)</label>
+        <div class="toggle-container">
+            <span>2 Images</span>
+            <label class="switch">
+              <input type="checkbox" id="numChoicesToggle">
+              <span class="slider round"></span>
+            </label>
+            <span>3 Images</span>
+        </div>
+      </div>
+    </div>
+    <div class="toolbar">
+      <button class="btn btn-primary" id="startBtn">Start Session</button>
+      <button class="btn btn-worksheet" id="worksheetBtn">Worksheet (Print)</button>
+    </div>
+    <div class="toolbar">
+       <button class="btn btn-export" id="exportBtn">Export Attempts (CSV)</button>
+       <button class="btn btn-clear" id="clearBtn">Clear Attempts</button>
+    </div>
+    <div class="divider"></div>
+    <p class="muted">Select options and press <strong>Start Session</strong>. Drag the correct picture to the box under the letter. The setup panel can be hidden with <em>Hide Setup</em>, dragged narrower/wider with the bar, and reopened using the <em>Setup</em> edge tab.</p>
+  </aside>
+
+  <div class="dragbar" id="dragbar" aria-hidden="true"></div>
+
+  <main class="student" aria-live="polite">
+    <h1>Initial Sound Match — Drag the Picture to the Letter</h1>
+    <div class="target-area">
+      <div id="flashcard" class="flashcard">
+        <span class="letter" id="letter">a</span>
+      </div>
+      <div id="dropzone" class="dropzone" aria-label="Drop the correct picture here">Drop picture here</div>
+      <div id="statusline" class="statusline">Attempts: <span id="attemptNum">0</span>/<span id="attemptTotal">10</span> &nbsp; • &nbsp; Correct: <span id="correctNum">0</span></div>
+    </div>
+    <section aria-label="Picture Choices">
+      <div id="pictures" class="picture-grid"></div>
+    </section>
+    <div id="overlay" class="overlay" role="dialog" aria-modal="true" aria-labelledby="summaryTitle">
+      <div class="sheet">
+        <h3 id="summaryTitle">Round complete</h3>
+        <p id="summaryText" class="muted"></p>
+        <div class="summary-grid">
+          <button class="btn btn-primary" id="newRoundBtn">New Round</button>
+          <button class="btn btn-worksheet" id="worksheetBtn2">Worksheet (Print)</button>
+        </div>
+         <div class="summary-grid" style="margin-top:10px;">
+          <button class="btn btn-export" id="exportBtn2">Export Attempts (CSV)</button>
+          <button class="btn btn-clear" onclick="document.getElementById('overlay').style.display='none'">Close</button>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <!-- Edge tab appears when the panel is collapsed -->
+  <div class="edge-tab" id="edgeTab" role="button" aria-controls="teacherPanel" aria-expanded="false" tabindex="0" title="Show setup">Setup</div>
+</div>
+
+<script>
+  // ---------- Small DOM helpers
+  const $ = (s)=>document.querySelector(s);
+  const el = (t,props={})=>Object.assign(document.createElement(t),props);
+
+  // ---------- Collapsible + resizable setup panel
+  const app = $("#app");
+  const teacher = $("#teacherPanel");
+  const dragbar = $("#dragbar");
+  const hideBtn = $("#hidePanelBtn");
+  const edgeTab = $("#edgeTab");
+
+  let isDragging = false;
+  let startX = 0;
+  let startWidth = 0;
+
+  function setTeacherWidth(px){
+    const min = parseInt(getComputedStyle(document.documentElement).getPropertyValue("--teacher-min")) || 220;
+    const max = parseInt(getComputedStyle(document.documentElement).getPropertyValue("--teacher-max")) || 640;
+    const clamped = Math.max(min, Math.min(max, px));
+    teacher.style.width = clamped + "px";
+  }
+
+  dragbar.addEventListener("mousedown",(e)=>{
+    isDragging = true;
+    startX = e.clientX;
+    startWidth = teacher.getBoundingClientRect().width;
+    document.body.style.userSelect = "none";
+  });
+  window.addEventListener("mousemove",(e)=>{
+    if(!isDragging) return;
+    const delta = e.clientX - startX;
+    setTeacherWidth(startWidth + delta);
+  });
+  window.addEventListener("mouseup",()=>{
+    if(!isDragging) return;
+    isDragging = false;
+    document.body.style.userSelect = "";
+  });
+
+  function collapsePanel(){
+    app.classList.add("collapsed");
+    hideBtn.setAttribute("aria-expanded","false");
+    edgeTab.setAttribute("aria-expanded","false");
+  }
+  function expandPanel(){
+    app.classList.remove("collapsed");
+    hideBtn.setAttribute("aria-expanded","true");
+    edgeTab.setAttribute("aria-expanded","true");
+  }
+
+  hideBtn.addEventListener("click", ()=>{
+    if(app.classList.contains("collapsed")) expandPanel(); else collapsePanel();
+  });
+  edgeTab.addEventListener("click", expandPanel);
+  edgeTab.addEventListener("keydown",(e)=>{
+    if(e.key==="Enter"||e.key===" "){ e.preventDefault(); expandPanel(); }
+  });
+
+  // ---------- Populate letters
+  (function populateLetters(){
+    const select = document.getElementById('targetSound');
+    const letters = 'abcdefghijklmnopqrstuvwxyz'.split('');
+    letters.forEach((l)=>{
+      const opt = document.createElement('option');
+      opt.value = l; opt.textContent = l;
+      if(l==='a') opt.selected = true;
+      select.appendChild(opt);
+    });
+  })();
+
+  // ---------- Word bank
+  const BANK = {
+    a:[{word:'apple',emoji:'🍎'},{word:'ant',emoji:'🐜'},{word:'airplane',emoji:'✈️'},{word:'alligator',emoji:'🐊'}],
+    b:[{word:'banana',emoji:'🍌'},{word:'ball',emoji:'🏀'},{word:'bear',emoji:'🐻'},{word:'butterfly',emoji:'🦋'},{word:'bus',emoji:'🚌'},{word:'boat',emoji:'🚤'}],
+    c:[{word:'cat',emoji:'🐱'},{word:'car',emoji:'🚗'},{word:'cow',emoji:'🐄'},{word:'cake',emoji:'🎂'},{word:'camel',emoji:'🐪'},{word:'carrot',emoji:'🥕'}],
+    d:[{word:'dog',emoji:'🐶'},{word:'duck',emoji:'🦆'},{word:'donut',emoji:'🍩'},{word:'drum',emoji:'🥁'},{word:'dolphin',emoji:'🐬'},{word:'deer',emoji:'🦌'}],
+    e:[{word:'elephant',emoji:'🐘'},{word:'egg',emoji:'🥚'},{word:'envelope',emoji:'✉️'},{word:'eagle',emoji:'🦅'},{word:'earth',emoji:'🌍'}],
+    f:[{word:'fish',emoji:'🐟'},{word:'frog',emoji:'🐸'},{word:'fox',emoji:'🦊'},{word:'flower',emoji:'🌸'},{word:'fire',emoji:'🔥'}],
+    g:[{word:'goat',emoji:'🐐'},{word:'grapes',emoji:'🍇'},{word:'gorilla',emoji:'🦍'},{word:'guitar',emoji:'🎸'},{word:'ghost',emoji:'👻'},{word:'gift',emoji:'🎁'},{word:'game die',emoji:'🎲'},{word:'globe',emoji:'🌍'},{word:'girl',emoji:'👧'},{word:'glasses',emoji:'👓'},{word:'goose',emoji:'🪿'}],
+    h:[{word:'horse',emoji:'🐴'},{word:'hat',emoji:'🎩'},{word:'hamburger',emoji:'🍔'},{word:'helicopter',emoji:'🚁'},{word:'house',emoji:'🏠'},{word:'heart',emoji:'❤️'},{word:'hippo',emoji:'🦛'}],
+    i:[{word:'ice cream',emoji:'🍦'},{word:'iguana',emoji:'🦎'},{word:'island',emoji:'🏝️'},{word:'insect',emoji:'🐛'},{word:'ink',emoji:'🖋️'}],
+    j:[{word:'jellyfish',emoji:'🪼'},{word:'juice',emoji:'🥤'},{word:'jacket',emoji:'🧥'},{word:'jar',emoji:'🫙'},{word:'jet',emoji:'✈️'}],
+    k:[{word:'kangaroo',emoji:'🦘'},{word:'key',emoji:'🔑'},{word:'kiwi',emoji:'🥝'},{word:'kite',emoji:'🪁'},{word:'koala',emoji:'🐨'}],
+    l:[{word:'lion',emoji:'🦁'},{word:'lemon',emoji:'🍋'},{word:'leaf',emoji:'🍃'},{word:'lamp',emoji:'💡'},{word:'ladybug',emoji:'🐞'},{word:'ladder',emoji:'🪜'}],
+    m:[{word:'monkey',emoji:'🐒'},{word:'mouse',emoji:'🐭'},{word:'mushroom',emoji:'🍄'},{word:'moon',emoji:'🌙'},{word:'milk',emoji:'🥛'},{word:'mountain',emoji:'🏔️'}],
+    n:[{word:'nest',emoji:'🪺'},{word:'notebook',emoji:'📓'},{word:'nut',emoji:'🥜'},{word:'needle',emoji:'🪡'},{word:'ninja',emoji:'🥷'}],
+    o:[{word:'octopus',emoji:'🐙'},{word:'orange',emoji:'🍊'},{word:'owl',emoji:'🦉'},{word:'ox',emoji:'🐂'},{word:'ostrich',emoji:'🦤'},{word:'onion',emoji:'🧅'},{word:'otter',emoji:'🦦'},{word:'olive',emoji:'🫒'},{word:'ocean',emoji:'🌊'},{word:'oil',emoji:'🛢️'},{word:'office',emoji:'🏢'}],
+    p:[{word:'pig',emoji:'🐷'},{word:'panda',emoji:'🐼'},{word:'pizza',emoji:'🍕'},{word:'penguin',emoji:'🐧'},{word:'pencil',emoji:'✏️'},{word:'pumpkin',emoji:'🎃'},{word:'parrot',emoji:'🦜'},{word:'peach',emoji:'🍑'},{word:'popcorn',emoji:'🍿'},{word:'pineapple',emoji:'🍍'},{word:'pear',emoji:'🍐'},{word:'police car',emoji:'🚓'}],
+    q:[{word:'queen',emoji:'👑'},{word:'quail',emoji:'🦃'},{word:'question',emoji:'❓'},{word:'quilt',emoji:'🪡'}],
+    r:[{word:'rabbit',emoji:'🐰'},{word:'rainbow',emoji:'🌈'},{word:'rocket',emoji:'🚀'},{word:'robot',emoji:'🤖'},{word:'ring',emoji:'💍'},{word:'rose',emoji:'🌹'}],
+    s:[{word:'snake',emoji:'🐍'},{word:'sun',emoji:'☀️'},{word:'star',emoji:'⭐'},{word:'sheep',emoji:'🐑'},{word:'strawberry',emoji:'🍓'},{word:'snail',emoji:'🐌'},{word:'snowman',emoji:'☃️'}],
+    t:[{word:'turtle',emoji:'🐢'},{word:'tiger',emoji:'🐅'},{word:'tree',emoji:'🌳'},{word:'train',emoji:'🚂'},{word:'tomato',emoji:'🍅'},{word:'tent',emoji:'⛺'}],
+    u:[{word:'unicorn',emoji:'🦄'},{word:'umbrella',emoji:'☂️'},{word:'ufo',emoji:'🛸'},{word:'ukulele',emoji:'🎸'}],
+    v:[{word:'violin',emoji:'🎻'},{word:'volcano',emoji:'🌋'},{word:'van',emoji:'🚐'},{word:'vegetable',emoji:'🥦'}],
+    w:[{word:'whale',emoji:'🐋'},{word:'watermelon',emoji:'🍉'},{word:'wolf',emoji:'🐺'},{word:'worm',emoji:'🪱'},{word:'window',emoji:'🪟'},{word:'watch',emoji:'⌚'}],
+    x:[{word:'xylophone',emoji:'🎹'},{word:'x-ray',emoji:'🦴'},{word:'x',emoji:'❌'}],
+    y:[{word:'yak',emoji:'🐂'},{word:'yellow',emoji:'💛'},{word:'yarn',emoji:'🧶'},{word:'yoyo',emoji:'🪀'},{word:'yacht',emoji:'⛵'},{word:'yam',emoji:'🍠'}],
+    z:[{word:'zebra',emoji:'🦓'},{word:'zucchini',emoji:'🥒'},{word:'zipper',emoji:'🤐'},{word:'zero',emoji:'0️⃣'},{word:'zombie',emoji:'🧟'}]
+  };
+
+  // ---------- Fallback SVG generator (for image mode "fallback")
+  const FALLBACK_SVG = {};
+  function getFallbackSVG(letter){
+    letter = (letter||"").toLowerCase();
+    if(FALLBACK_SVG[letter]) return FALLBACK_SVG[letter];
+    const idx = letter.charCodeAt(0)-97;
+    const hue = ((idx*137)%360+360)%360;
+    const bg = `hsl(${hue},60%,85%)`;
+    const textColor = '#111827';
+    const svg = `<svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg"><rect width="100" height="100" rx="15" fill="${bg}" /><text x="50" y="65" font-size="60" font-family="Arial, sans-serif" fill="${textColor}" text-anchor="middle">${letter.toUpperCase()}</text></svg>`;
+    FALLBACK_SVG[letter] = svg;
+    return svg;
+  }
+
+  // ---------- Utilities
+  function shuffle(array){ for (let i=array.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [array[i],array[j]]=[array[j],array[i]];} return array; }
+  function pickRandom(arr){ return arr[Math.floor(Math.random()*arr.length)] }
+  function sampleWithout(arr, excludeSet, k){ const pool = arr.filter(x=>!excludeSet.has(x.word)); shuffle(pool); return pool.slice(0,k); }
+
+  // ---------- NEW: Text-to-Speech Function
+  function speak(text) {
+    if ('speechSynthesis' in window) {
+      window.speechSynthesis.cancel(); // Stop any previous speech
+      const utterance = new SpeechSynthesisUtterance(text);
+      window.speechSynthesis.speak(utterance);
+    } else {
+      alert('Sorry, your browser does not support text-to-speech.');
+    }
+  }
+
+  // ---------- State
+  let currentTarget='a';
+  let totalAttempts=10;
+  let attemptIndex=0;
+  let correctCount=0;
+  let usedTargetWords=new Set();
+  let currentCorrectWord=null;
+  const attempts=[];
+
+  // ---------- Elements
+  const studentName = document.getElementById('studentName');
+  const targetSoundSel = document.getElementById('targetSound');
+  const attemptsCountInput = document.getElementById('attemptsCount');
+  const showWordLabels = document.getElementById('showWordLabels');
+  const imageModeSel = document.getElementById('imageMode');
+  const numChoicesToggle = document.getElementById('numChoicesToggle');
+  const letterSpan = document.getElementById('letter');
+  const attemptNum = document.getElementById('attemptNum');
+  const attemptTotal = document.getElementById('attemptTotal');
+  const correctNum = document.getElementById('correctNum');
+  const dz = document.getElementById('dropzone');
+  const grid = document.getElementById('pictures');
+  const overlay = document.getElementById('overlay');
+  const summaryText = document.getElementById('summaryText');
+
+  // ---------- Start / new round
+  document.getElementById('startBtn').addEventListener('click', ()=>{
+    // Auto-hide the setup panel on start for distraction-free student view
+    collapsePanel();
+    startRound();
+  });
+  document.getElementById('newRoundBtn').addEventListener('click', startRound);
+
+  function startRound(){
+    currentTarget = (targetSoundSel.value||'a').toLowerCase();
+    totalAttempts = Math.max(3, Math.min(15, parseInt(attemptsCountInput.value)||10));
+    letterSpan.textContent = currentTarget;
+    attemptIndex=0; correctCount=0; usedTargetWords = new Set();
+    attemptTotal.textContent = totalAttempts; correctNum.textContent='0'; attemptNum.textContent='0';
+    overlay.style.display='none';
+    dz.textContent='Drop picture here'; dz.className='dropzone';
+    nextAttempt();
+  }
+
+  function buildChoices(){
+    const numChoices = numChoicesToggle.checked ? 3 : 2;
+    const numDecoys = numChoices - 1;
+    
+    const targetBank = BANK[currentTarget];
+    const unused = sampleWithout(targetBank, usedTargetWords, 1);
+    const chosenCorrect = unused.length ? unused[0] : pickRandom(targetBank);
+    currentCorrectWord = chosenCorrect;
+    usedTargetWords.add(chosenCorrect.word);
+    
+    const others = shuffle(Object.keys(BANK).filter(k=>k!==currentTarget));
+    const choices = [chosenCorrect];
+    
+    for(let i = 0; i < numDecoys; i++){
+        choices.push(pickRandom(BANK[others[i]]));
+    }
+    
+    return shuffle(choices);
+  }
+
+  function renderChoices(cards){
+    const numColumns = cards.length;
+    grid.style.gridTemplateColumns = `repeat(${numColumns}, minmax(220px, 1fr))`;
+    grid.innerHTML='';
+    cards.forEach((c)=>{
+      const card = el('article',{className:'card', role:'group'});
+      const imgbox = el('div',{className:'imgbox draggable', draggable:true});
+
+      // Add speaker button
+      const speakerBtn = el('button', {
+        className: 'speaker-btn',
+        innerHTML: '🔊',
+        title: `Hear the word "${c.word}"`,
+        'aria-label': `Hear the word "${c.word}"`
+      });
+      speakerBtn.addEventListener('click', (e) => {
+        e.stopPropagation(); // Prevent drag-and-drop from starting
+        speak(c.word);
+      });
+      imgbox.appendChild(speakerBtn);
+
+      if(imageModeSel.value==='emoji'){
+        const em = el('div',{className:'emoji', textContent:c.emoji, role:'img', 'aria-label':c.word});
+        imgbox.appendChild(em);
+      }else{
+        const first = c.word.toLowerCase().charAt(0);
+        const wrapper = el('div',{className:'fallback'});
+        wrapper.innerHTML = getFallbackSVG(first);
+        imgbox.appendChild(wrapper);
+      }
+      const label = el('div',{className:'label'});
+      label.textContent = c.word;
+      if(showWordLabels.value==='off') label.style.visibility='hidden';
+      imgbox.addEventListener('dragstart', (e)=>{ e.dataTransfer.setData('text/plain', c.word); });
+      card.appendChild(imgbox); card.appendChild(label); grid.appendChild(card);
+    });
+  }
+
+  function nextAttempt(){
+    attemptIndex++; attemptNum.textContent = attemptIndex;
+    dz.className='dropzone'; dz.textContent='Drop picture here';
+    if(attemptIndex>totalAttempts){ finishRound(); return; }
+    renderChoices( buildChoices() );
+  }
+
+  dz.addEventListener('dragover', e=>e.preventDefault());
+  dz.addEventListener('drop', (e)=>{
+    e.preventDefault();
+    const word = (e.dataTransfer.getData('text/plain')||'').toLowerCase();
+    const ok = !!currentCorrectWord && word === currentCorrectWord.word.toLowerCase();
+    feedback(ok, word);
+  });
+
+  function feedback(ok, chosenWord){
+    dz.classList.toggle('good', ok);
+    dz.classList.toggle('bad', !ok);
+    dz.textContent = ok ? '✅ Correct!' : '❌ Try again';
+    if(ok){ correctCount++; correctNum.textContent = String(correctCount); confetti(); }
+    else { dz.classList.add('shake'); setTimeout(()=>dz.classList.remove('shake'), 350); }
+    attempts.push({ time:new Date().toISOString(), student:studentName.value.trim()||'N/A', target:currentTarget, chosenWord, correctWord:currentCorrectWord?.word||'', result: ok?'Correct':'Incorrect' });
+    setTimeout(()=>{ if(attemptIndex>=totalAttempts){ finishRound(); } else { nextAttempt(); } }, 800);
+  }
+
+  function finishRound(){ overlay.style.display='flex'; summaryText.textContent = `Target sound “${currentTarget}”. Score: ${correctCount} / ${totalAttempts}.`; }
+
+  function exportCSV(rows){
+    if(rows.length === 0){ alert('No attempts to export.'); return; }
+    const cols = ['time','student','target','chosenWord','correctWord','result'];
+    const csv = [cols.join(',')].concat( rows.map(r=> cols.map(c=> JSON.stringify(r[c]??'')).join(',')) ).join('\n');
+    const blob = new Blob([csv], {type:'text/csv;charset=utf-8;'});
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob); a.download='initial_sound_attempts.csv';
+    document.body.appendChild(a); a.click(); a.remove(); URL.revokeObjectURL(a.href);
+  }
+  document.getElementById('exportBtn').addEventListener('click', ()=>exportCSV(attempts));
+  document.getElementById('exportBtn2').addEventListener('click', ()=>exportCSV(attempts));
+  document.getElementById('clearBtn').addEventListener('click', ()=>{ attempts.length=0; alert('Attempts cleared.'); });
+
+  function printWorksheet(){
+    if(attempts.length === 0){
+      alert('No attempts to print on a worksheet.');
+      return;
+    }
+    const student = studentName.value.trim() || 'N/A';
+    const date = new Date().toLocaleDateString();
+    const win = window.open('', '_blank');
+
+    const tableRows = attempts.map(att => `
+      <tr>
+        <td>${att.target}</td>
+        <td>${att.chosenWord}</td>
+        <td>${att.correctWord}</td>
+        <td>${att.result === 'Correct' ? '✅' : '❌'}</td>
+      </tr>
+    `).join('');
+
+    const worksheetHTML = `
+      <!DOCTYPE html>
+      <html>
+      <head>
+        <title>Initial Sound Match Worksheet</title>
+        <style>
+          body { font-family: "Sassoon Primary", Andika, "Chalkboard SE", "Comic Sans MS", sans-serif; padding: 20px; }
+          h1 { text-align: center; }
+          .info { display: flex; justify-content: space-between; margin-bottom: 20px; font-size: 18px; }
+          table { width: 100%; border-collapse: collapse; font-size: 16px; }
+          th, td { border: 1px solid #ccc; padding: 12px; text-align: left; }
+          th { background-color: #f2f2f2; }
+          td:last-child { font-size: 24px; text-align: center; }
+          @media print {
+            body { padding: 0; }
+            .no-print { display: none; }
+          }
+        </style>
+      </head>
+      <body>
+        <h1>Initial Sound Match Worksheet</h1>
+        <div class="info">
+          <span><strong>Student:</strong> ${student}</span>
+          <span><strong>Date:</strong> ${date}</span>
+        </div>
+        <table>
+          <thead>
+            <tr>
+              <th>Target Sound</th>
+              <th>Chosen Word</th>
+              <th>Correct Word</th>
+              <th>Result</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${tableRows}
+          </tbody>
+        </table>
+        <p class="no-print" style="text-align:center; margin-top:20px;">
+          Use your browser's print option (Ctrl/Cmd + P) to print this worksheet or save as a PDF.
+        </p>
+      </body>
+      </html>
+    `;
+    win.document.write(worksheetHTML);
+    win.document.close();
+    win.print();
+  }
+  document.getElementById('worksheetBtn').addEventListener('click', printWorksheet);
+  document.getElementById('worksheetBtn2').addEventListener('click', printWorksheet);
+
+  function confetti(){
+    for(let i=0;i<60;i++){
+      const p=document.createElement('div');
+      const size=Math.random()*10+5;
+      p.style.cssText=`position:fixed; left:${Math.random()*100}vw; top:${Math.random()*-40}vh; width:${size}px; height:${size}px; background:hsl(${Math.random()*360},100%,60%); opacity:.9; z-index:10000; border-radius:${Math.random()>.5?'50%':'2px'};`;
+      document.body.appendChild(p);
+      p.animate([{transform:`translateY(0) rotate(${Math.random()*360}deg)`,opacity:1},{transform:`translateY(120vh) rotate(${Math.random()*1000+360}deg)`,opacity:0}],{duration:Math.random()*2200+3400,easing:'cubic-bezier(.1,.6,.4,1)',delay:Math.random()*280,fill:'forwards'});
+      setTimeout(()=>p.remove(),6000);
+    }
+  }
+
+  // Autostart so content is visible; do not auto-collapse here (only on Start button)
+  (function boot(){
+    letterSpan.textContent = 'a';
+    attemptTotal.textContent = '10';
+    attemptNum.textContent = '0';
+    correctNum.textContent = '0';
+    renderChoices( (function(){ currentTarget='a'; usedTargetWords=new Set(); currentCorrectWord=null; return buildChoices(); })() );
+  })();
+</script>
+</body>
+</html>
