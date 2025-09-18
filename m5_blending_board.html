@@ -1,0 +1,811 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>M5 Blending Board</title>
+    <style>
+        body {
+            font-family: 'Sassoon Primary', 'Comic Sans MS', Arial, sans-serif;
+            margin: 0;
+            background-color: #ffffff;
+            height: 100vh;
+            overflow: hidden;
+            touch-action: manipulation;
+        }
+
+        .watermark {
+            position: fixed;
+            bottom: 10px;
+            right: 10px;
+            font-size: 12px;
+            color: #6b7280;
+            opacity: 0.7;
+            font-family: 'Sassoon Primary', 'Comic Sans MS', Arial, sans-serif;
+            pointer-events: none;
+            z-index: 1000;
+        }
+
+        /* M5 Blending Board Styles */
+        .blending-board {
+            display: flex;
+            height: 100vh;
+        }
+
+        .teacher-view {
+            width: 20%;
+            padding: 15px;
+            background-color: #ffffff;
+            border-right: 1px solid #d2d2d7;
+            max-height: 100vh;
+            overflow-y: auto;
+        }
+
+        .student-view {
+            width: 80%;
+            padding: 20px;
+            background-color: #ffffff;
+            overflow-x: auto;
+            box-sizing: border-box;
+        }
+
+        .form-group {
+            margin: 8px 0;
+            font-size: 14px;
+        }
+
+        .form-group input {
+            width: calc(100% - 18px);
+            padding: 8px;
+            border: 1px solid #c7c7cc;
+            border-radius: 8px;
+            font-size: 14px;
+            font-family: 'Sassoon Primary', 'Comic Sans MS', Arial, sans-serif;
+            box-sizing: border-box;
+            display: block;
+            margin-top: 4px;
+        }
+
+        .form-group label {
+            font-size: 14px;
+            color: #1d1d1f;
+            display: block;
+        }
+
+        .support-dropdown {
+            position: relative;
+            width: 100%;
+        }
+
+        .support-select {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #c7c7cc;
+            border-radius: 8px;
+            font-size: 14px;
+            font-family: 'Sassoon Primary', 'Comic Sans MS', Arial, sans-serif;
+            background-color: #ffffff;
+            appearance: none;
+            cursor: pointer;
+            box-sizing: border-box;
+        }
+
+        .support-select:focus {
+            outline: none;
+            border-color: #007aff;
+        }
+
+        .support-dropdown::after {
+            content: '▼';
+            position: absolute;
+            right: 10px;
+            top: 50%;
+            transform: translateY(-50%);
+            pointer-events: none;
+            color: #1d1d1f;
+        }
+
+        .support-select option {
+            padding: 10px;
+            font-family: 'Sassoon Primary', 'Comic Sans MS', Arial, sans-serif;
+        }
+
+        @keyframes dropdownFade {
+            0% { opacity: 0; transform: translateY(-10px); }
+            100% { opacity: 1; transform: translateY(0); }
+        }
+
+        .support-select:focus + .support-options {
+            animation: dropdownFade 0.3s ease-in-out;
+        }
+
+        .letter-tiles {
+            min-height: 120px;
+            padding: 15px;
+            background-color: #ffffff;
+            border-radius: 12px;
+            text-align: center;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 10px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        .letter-tile {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            width: 160px;
+            height: 160px;
+            background: #ffffff; /* Default tile background */
+            color: #000000; /* Default tile text color - black */
+            margin: 5px;
+            font-size: 72px;
+            font-family: 'Sassoon Primary', 'Comic Sans MS', Arial, sans-serif;
+            cursor: move;
+            user-select: none;
+            border: 1px solid #d2d2d7;
+            border-radius: 12px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            flex-shrink: 0;
+            touch-action: none;
+            pointer-events: auto;
+        }
+
+        .letter-tile.selected {
+            border: 2px solid #007aff;
+            transform: scale(1.05);
+        }
+
+        .drop-zone {
+            width: auto;
+            min-width: 600px;
+            height: 200px;
+            border: 2px dashed #c7c7cc; /* Default border color */
+            margin: 50px auto;
+            padding: 20px;
+            background-color: #ffffff; /* Default background */
+            border-radius: 12px;
+            text-align: center;
+            display: flex;
+            justify-content: flex-start;
+            align-items: center;
+            flex-wrap: nowrap;
+            gap: 10px;
+            overflow-x: auto;
+            touch-action: none;
+            font-family: 'Sassoon Primary', 'Comic Sans MS', Arial, sans-serif;
+            color: #6b7280;
+            font-size: 20px;
+        }
+
+        .drop-zone.correct {
+            background-color: #e6ffed !important;
+            border-color: #34c759 !important;
+        }
+
+        .drop-zone.incorrect {
+            background-color: #ffebee !important;
+            border-color: #ff3b30 !important;
+        }
+
+
+        .bb-button {
+            width: 100%;
+            padding: 12px;
+            margin: 5px 0;
+            cursor: pointer;
+            border: none;
+            border-radius: 8px;
+            font-family: 'Sassoon Primary', 'Comic Sans MS', Arial, sans-serif;
+            font-size: 16px;
+            font-weight: 500;
+            transition: background-color 0.3s, transform 0.1s;
+        }
+
+        .bb-button:hover {
+            transform: translateY(-1px);
+        }
+
+        #generateBtn { background-color: #007aff; color: white; }
+        #resetBtnBB { background-color: #af52de; color: white; }
+        #correctBtn { background-color: #34c759; color: white; }
+        #incorrectBtn { background-color: #ff3b30; color: white; }
+        #reportBtnBB { background-color: #ff9500; color: white; }
+        #printBtnBB { background-color: #ff2d55; color: white; }
+        #resetSessionDataBtnBB { background-color: #dc3545; color: white; }
+        #adminDownloadAllDataBtnBB { background-color: #17a2b8; color: white; }
+        #homeBtnBB { background-color: #6c757d; color: white; }
+
+        .modal { display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; background-color: rgba(0, 0, 0, 0.5); overflow-y: auto; }
+        .modal-content { background-color: #ffffff; margin: 5% auto; padding: 20px; border-radius: 12px; width: 80%; max-width: 800px; box-shadow: 0 4px 8px rgba(0,0,0,0.2); font-family: 'Sassoon Primary', 'Comic Sans MS', Arial, sans-serif; }
+        .close-btn { color: #6b7280; float: right; font-size: 28px; font-weight: bold; cursor: pointer; }
+        .close-btn:hover { color: #000000; }
+        .report-table { width: 100%; border-collapse: collapse; margin-top: 20px; font-family: 'Sassoon Primary', 'Comic Sans MS', Arial, sans-serif; }
+        .report-table th, .report-table td { border: 1px solid #d2d2d7; padding: 12px; text-align: left; }
+        .report-table th { background-color: #f5f5f7; font-weight: 600; position: sticky; top: 0; z-index: 1; }
+        .modal-content .report-table th { top: -20px; }
+        .report-table tr:nth-child(even) { background-color: #f5f5f7; }
+        .report-table tr:hover { background-color: #e9e9eb; }
+        .report-status-correct { color: #34c759; font-weight: bold; }
+        .report-status-incorrect { color: #ff3b30; font-weight: bold; }
+        .report-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+        .report-controls { display: flex; gap: 10px; margin-top: 20px; }
+        .report-btn { padding: 8px 16px; border-radius: 8px; border: none; cursor: pointer; font-weight: 500; transition: background-color 0.3s; font-family: 'Sassoon Primary', 'Comic Sans MS', Arial, sans-serif; }
+        .export-csv-btn { background-color: #007aff; color: white; }
+        .print-report-btn { background-color: #6b7280; color: white; }
+        .copy-report-btn { background-color: #28a745; color: white; }
+        .no-data-message { text-align: center; padding: 40px 0; color: #6b7280; font-size: 18px; }
+        .formatted-date { white-space: nowrap; }
+        h1 { color: #000000; text-align: center; font-size: 48px; font-family: 'Sassoon Primary', 'Comic Sans MS', Arial, sans-serif; }
+        .student-view > h1 { margin-top: 0; margin-bottom: 20px; }
+        h2 { font-size: 18px; color: #1d1d1f; font-family: 'Sassoon Primary', 'Comic Sans MS', Arial, sans-serif; }
+
+        /* Responsive Styles */
+        @media (max-width: 1200px) { .drop-zone { min-width: 400px; } .letter-tile { width: 120px; height: 120px; font-size: 54px; } }
+        @media (max-width: 768px) { .teacher-view { width: 30%; } .student-view { width: 70%; } .drop-zone { min-width: 250px; height: 150px; } .letter-tile { width: 80px; height: 80px; font-size: 36px; } .modal-content { width: 90%; } }
+        @media (max-width: 480px) { .blending-board { flex-direction: column; } .teacher-view { width: 100%; max-height: 40vh; border-right: none; border-bottom: 1px solid #d2d2d7; } .student-view { width: 100%; height: 60vh; } .student-view > h1 { font-size: 24px; } .drop-zone { min-width: 200px; height: 120px; margin: 20px auto; } .letter-tile { width: 60px; height: 60px; font-size: 28px; } .modal-content { width: 95%; margin: 2% auto; } }
+        @media print { body { overflow: visible !important; height: auto !important; } body * { visibility: hidden; } #reportModal, #reportModal .modal-content, #reportModal .modal-content * { visibility: visible; } #reportModal { position: absolute !important; left: 0 !important; top: 0 !important; width: 100% !important; height: auto !important; overflow: visible !important; background-color: white !important; z-index: 9999 !important; } .modal-content { position: static !important; width: 100% !important; max-width: none !important; margin: 0 !important; padding: 10px !important; border: none !important; box-shadow: none !important; max-height: none !important; overflow-y: visible !important; } .report-header { margin-bottom: 15px; } .report-header h2 { font-size: 16pt; text-align: left; } .report-table { width: 100%; font-size: 9pt; border-collapse: collapse; margin-top: 0; } .report-table th, .report-table td { border: 1px solid #666 !important; padding: 4px 6px !important; word-break: break-word; } .report-table th { background-color: #e0e0e0 !important; position: static !important; font-weight: bold; -webkit-print-color-adjust: exact; color-adjust: exact; } .report-table tr:nth-child(even) { background-color: #f0f0f0 !important; -webkit-print-color-adjust: exact; color-adjust: exact; } .report-status-correct, .report-status-incorrect { font-weight: normal; -webkit-print-color-adjust: exact; color-adjust: exact; } .close-btn, .report-controls, .watermark, .teacher-view, .student-view > h1, .letter-tiles, .drop-zone, .bb-button, .form-group button#homeBtnBB, .form-group button#resetSessionDataBtnBB, .form-group button#adminDownloadAllDataBtnBB { display: none !important; } }
+        .hidden { display: none !important; }
+    </style>
+</head>
+<body>
+    <div id="blendingBoard" class="blending-board">
+        <div class="teacher-view">
+            <div class="form-group">
+                <label for="studentNameBB">Student:</label>
+                <input type="text" id="studentNameBB">
+            </div>
+            <div class="form-group">
+                <label for="adultNameBB">Adult:</label>
+                <input type="text" id="adultNameBB">
+            </div>
+            <div class="form-group">
+                <label for="wordInputBB">Word:</label>
+                <input type="text" id="wordInputBB">
+            </div>
+            <div class="form-group">
+                <label for="verbalSupportLevelBB">Verbal Support Scale (1-5):</label>
+                <div class="support-dropdown">
+                    <select id="verbalSupportLevelBB" class="support-select">
+                        <option value="5" title="Continuous and explicit verbal instructions, repeated modeling, and detailed prompting required throughout blending.">5 - Full Verbal Support</option>
+                        <option value="4" title="Frequent, detailed verbal prompts and explicit modeling required to successfully blend sounds.">4 - Significant Verbal Support</option>
+                        <option value="3" title="Regular verbal cues, reminders, or partial modeling needed to support blending.">3 - Moderate Verbal Support</option>
+                        <option value="2" title="Brief verbal prompts or minimal reminders needed occasionally.">2 - Minimal Verbal Support</option>
+                        <option value="1" selected title="No verbal support required; student blends sounds independently.">1 - Independent (Verbal)</option>
+                    </select>
+                </div>
+            </div>
+            <div class="form-group">
+                <label for="visualSupportLevelBB">Visual Support Scale (1-5):</label>
+                <div class="support-dropdown">
+                    <select id="visualSupportLevelBB" class="support-select">
+                        <option value="5" title="Constant visual prompts (e.g., pointing, gesture, explicit visual aids, or repeated modeling) required throughout blending.">5 - Full Visual Support</option>
+                        <option value="4" title="Frequent visual cues or consistent modeling necessary to successfully blend sounds.">4 - Significant Visual Support</option>
+                        <option value="3" title="Occasional visual prompts (such as gestures, pointing, or visual aids) needed to support blending.">3 - Moderate Visual Support</option>
+                        <option value="2" title="Rare or brief visual prompts required; student largely independent visually.">2 - Minimal Visual Support</option>
+                        <option value="1" selected title="No visual support required; student blends sounds independently.">1 - Independent (Visual)</option>
+                    </select>
+                </div>
+            </div>
+            <div class="form-group"><button id="generateBtn" class="bb-button">Generate</button></div>
+            <div class="form-group"><button id="resetBtnBB" class="bb-button">Reset Tiles</button></div>
+            <div class="form-group"><button id="correctBtn" class="bb-button">Correct</button></div>
+            <div class="form-group"><button id="incorrectBtn" class="bb-button">Incorrect</button></div>
+            <div class="form-group"><button id="reportBtnBB" class="bb-button">View Report</button></div>
+            <div class="form-group"><button id="printBtnBB" class="bb-button">Print</button></div>
+            <div class="form-group"><button id="resetSessionDataBtnBB" class="bb-button">Reset Session Data</button></div>
+            <div class="form-group"><button id="adminDownloadAllDataBtnBB" class="bb-button">Download All Stored Data (Admin)</button></div>
+            <div class="form-group"><button id="homeBtnBB" class="bb-button">Clear Current Board</button></div>
+        </div>
+        <div class="student-view">
+            <h1>M5 Blending Board</h1>
+            <div class="letter-tiles" id="letterTilesBB"></div>
+            <div class="drop-zone" id="dropZoneBB">Drag or tap letters here!</div>
+        </div>
+    </div>
+
+    <div id="reportModal" class="modal">
+        <div class="modal-content">
+            <div class="report-header">
+                <h2>Phonics Blending Progress Report</h2>
+                <span class="close-btn" onclick="closeReportModal()">×</span>
+            </div>
+            <div id="reportContent"></div>
+            <div class="report-controls">
+                <button class="report-btn export-csv-btn" onclick="exportReportCSV(false)">Export Current View CSV</button>
+                <button class="report-btn print-report-btn" onclick="printReport()">Print Report</button>
+                <button class="report-btn copy-report-btn" onclick="copyReportText()">Copy Report Text</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="watermark">. </div>
+
+    <script>
+        const reportModal = document.getElementById('reportModal');
+        let currentWordBB = '';
+        let progressDataBB = [];
+        let currentWordHasResultBB = false;
+        let touchElementBB = null;
+        let touchStartXBB = 0, touchStartYBB = 0;
+        let cloneElementBB = null;
+        let selectedTileBB = null;
+        let blendingBoardInitialized = false;
+        let currentAttemptIdBB = null;
+
+        function initializeBlendingBoard() {
+            if (blendingBoardInitialized) return;
+            document.getElementById('generateBtn').onclick = generateWordBB;
+            document.getElementById('resetBtnBB').onclick = resetCurrentWordTilesBB;
+            document.getElementById('correctBtn').onclick = () => markAccuracyBB(true);
+            document.getElementById('incorrectBtn').onclick = () => markAccuracyBB(false);
+            document.getElementById('reportBtnBB').onclick = showReportModalBB;
+            document.getElementById('printBtnBB').onclick = printCurrentViewBB;
+            document.getElementById('resetSessionDataBtnBB').onclick = handleResetSessionDataBB;
+            document.getElementById('adminDownloadAllDataBtnBB').onclick = handleAdminDownloadAllDataBB;
+            document.getElementById('homeBtnBB').onclick = clearBlendingBoardInterface;
+
+            const dropZoneBB = document.getElementById('dropZoneBB');
+            dropZoneBB.ondrop = (e) => dropTile(e, 'BB');
+            dropZoneBB.ondragover = allowDrop;
+            dropZoneBB.ontouchstart = (e) => { e.preventDefault(); handleDropZoneTouch(e, 'BB'); };
+
+            // Load existing progress data from browser's local storage
+            loadProgressDataBB();
+
+            blendingBoardInitialized = true;
+            console.log("M5 Blending Board Initialized. Data is stored in the browser.");
+        }
+
+        function generateWordBB() {
+            const wordInput = document.getElementById('wordInputBB').value.toLowerCase().trim();
+            if (wordInput) {
+                currentAttemptIdBB = `attemptBB-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`;
+                currentWordBB = wordInput;
+                currentWordHasResultBB = false;
+                generateTilesForView(currentWordBB, '', 'letterTilesBB', 'dropZoneBB', currentAttemptIdBB, 'BB');
+                document.getElementById('dropZoneBB').classList.remove('correct', 'incorrect');
+                if (selectedTileBB) selectedTileBB.classList.remove('selected');
+                selectedTileBB = null;
+            } else {
+                alert("Please enter a word to generate.");
+            }
+        }
+
+        function resetCurrentWordTilesBB() {
+            const tilesDiv = document.getElementById('letterTilesBB');
+            const dropZone = document.getElementById('dropZoneBB');
+            tilesDiv.innerHTML = '';
+            dropZone.innerHTML = 'Drag or tap letters here!';
+            dropZone.classList.remove('correct', 'incorrect');
+            currentWordHasResultBB = false;
+            if (selectedTileBB) selectedTileBB.classList.remove('selected');
+            selectedTileBB = null;
+            if (currentWordBB && currentAttemptIdBB) {
+                 generateTilesForView(currentWordBB, '', 'letterTilesBB', 'dropZoneBB', currentAttemptIdBB, 'BB');
+            } else {
+                 dropZone.style.width = 'auto';
+            }
+        }
+
+        function clearBlendingBoardInterface() {
+            document.getElementById('studentNameBB').value = '';
+            document.getElementById('adultNameBB').value = '';
+            document.getElementById('wordInputBB').value = '';
+            document.getElementById('letterTilesBB').innerHTML = '';
+            const dropZone = document.getElementById('dropZoneBB');
+            dropZone.innerHTML = 'Drag or tap letters here!';
+            dropZone.classList.remove('correct', 'incorrect');
+            dropZone.style.width = 'auto';
+            currentWordBB = '';
+            currentAttemptIdBB = null;
+            currentWordHasResultBB = false;
+            if (selectedTileBB) selectedTileBB.classList.remove('selected');
+            selectedTileBB = null;
+            document.getElementById('verbalSupportLevelBB').value = '1';
+            document.getElementById('visualSupportLevelBB').value = '1';
+            console.log("Blending board interface cleared. This does not affect saved data.");
+        }
+
+        function markAccuracyBB(isCorrect) {
+            if (!currentAttemptIdBB) {
+                alert("Please generate a word first before marking correct/incorrect.");
+                return;
+            }
+            const dropZone = document.getElementById('dropZoneBB');
+            dropZone.classList.toggle('correct', isCorrect);
+            dropZone.classList.toggle('incorrect', !isCorrect);
+            currentWordHasResultBB = true;
+            if (isCorrect) launchConfetti();
+            saveProgressBB(isCorrect, currentWordBB, currentAttemptIdBB);
+        }
+
+        // Functions: generateTilesForView, adjustDropZoneWidth, allowDrop, dragTileStart, dropTile,
+        // handleTileTouchStart, handleTileTouchMove, handleTileTouchEnd, handleDropZoneTouch
+        // These UI functions remain unchanged.
+        function generateTilesForView(mainWord, additionalChars, tilesDivId, dropZoneId, attemptIdPrefix, viewTypeSuffix) {
+            const mainWordLetters = mainWord.toLowerCase().split('');
+            let letters = mainWordLetters.filter(l => l.trim() !== '');
+            for (let i = letters.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [letters[i], letters[j]] = [letters[j], letters[i]];
+            }
+            const tilesDiv = document.getElementById(tilesDivId);
+            tilesDiv.innerHTML = '';
+            let tileCounter = 0;
+            letters.forEach(letter => {
+                const tile = document.createElement('div');
+                tile.className = 'letter-tile';
+                tile.draggable = true;
+                tile.textContent = letter;
+                tile.id = `tile-${attemptIdPrefix}-${tileCounter++}`;
+                tile.ondragstart = (e) => dragTileStart(e, viewTypeSuffix);
+                tile.addEventListener('touchstart', (e) => handleTileTouchStart(e, viewTypeSuffix), { passive: false });
+                tile.addEventListener('touchmove', (e) => handleTileTouchMove(e, viewTypeSuffix), { passive: false });
+                tile.addEventListener('touchend', (e) => handleTileTouchEnd(e, viewTypeSuffix), { passive: false });
+                tilesDiv.appendChild(tile);
+            });
+            adjustDropZoneWidth(dropZoneId, mainWord.length);
+        }
+
+        function adjustDropZoneWidth(dropZoneId, numLetters) {
+            const dropZone = document.getElementById(dropZoneId);
+            if (!dropZone) return;
+            const firstTile = document.querySelector(`#${dropZoneId.replace('dropZone', 'letterTiles')} .letter-tile`) || document.createElement('div');
+            firstTile.classList.add('letter-tile');
+            let tempAppend = false;
+            if (!firstTile.isConnected) { document.body.appendChild(firstTile); tempAppend = true; }
+            const tileStyle = window.getComputedStyle(firstTile);
+            const baseTileWidth = parseFloat(tileStyle.width) || 160;
+            if (tempAppend) { firstTile.remove(); }
+            const gap = 10;
+            const padding = (parseFloat(window.getComputedStyle(dropZone).paddingLeft) || 0) + (parseFloat(window.getComputedStyle(dropZone).paddingRight) || 0) || 40;
+            let requiredWidth = (numLetters * baseTileWidth) + (Math.max(0, numLetters - 1) * gap) + padding;
+            const minWidthCSS = parseFloat(window.getComputedStyle(dropZone).minWidth) || 0;
+            dropZone.style.width = `${Math.max(requiredWidth, minWidthCSS)}px`;
+        }
+
+        function allowDrop(ev) { ev.preventDefault(); }
+
+        function dragTileStart(ev, viewType) {
+            ev.dataTransfer.setData("text", ev.target.textContent);
+            ev.dataTransfer.setData("id", ev.target.id);
+            ev.dataTransfer.setData("viewType", viewType);
+        }
+
+        function dropTile(ev, viewTypeTarget) {
+            ev.preventDefault(); ev.stopPropagation();
+            let letter, tileId, sourceViewType, sourceElement = null;
+            let currentSelectedTile = selectedTileBB;
+            let currentTouchElement = touchElementBB;
+            let currentCloneElement = cloneElementBB;
+
+            if (ev.dataTransfer && ev.dataTransfer.types.length > 0 && ev.dataTransfer.types.includes("id")) {
+                letter = ev.dataTransfer.getData("text"); tileId = ev.dataTransfer.getData("id");
+                sourceViewType = ev.dataTransfer.getData("viewType"); sourceElement = document.getElementById(tileId);
+            } else if (currentSelectedTile) {
+                letter = currentSelectedTile.textContent; tileId = currentSelectedTile.id;
+                sourceViewType = viewTypeTarget; sourceElement = currentSelectedTile;
+            } else if (currentTouchElement) {
+                letter = currentTouchElement.textContent; tileId = currentTouchElement.id;
+                sourceViewType = viewTypeTarget; sourceElement = currentTouchElement;
+            } else { console.warn("Drop event with no clear data source."); return; }
+
+            if (sourceViewType !== viewTypeTarget) {
+                if (currentCloneElement) currentCloneElement.remove();
+                cloneElementBB = null; touchElementBB = null; if(selectedTileBB) selectedTileBB.classList.remove('selected'); selectedTileBB = null;
+                return;
+            }
+            if (!letter || !tileId) { console.error("Could not determine letter or tileId for drop."); return; }
+
+            const dropZone = document.getElementById('dropZoneBB');
+            if (dropZone.textContent.includes('letters here')) dropZone.innerHTML = '';
+            const newTileInDropZone = document.createElement('div');
+            newTileInDropZone.className = 'letter-tile';
+            newTileInDropZone.textContent = letter;
+            newTileInDropZone.setAttribute('data-original-id', tileId);
+            dropZone.appendChild(newTileInDropZone);
+            if (sourceElement && sourceElement.parentNode) sourceElement.remove();
+
+            if (currentCloneElement) currentCloneElement.remove();
+            cloneElementBB = null; if (selectedTileBB) selectedTileBB.classList.remove('selected');
+            selectedTileBB = null; touchElementBB = null;
+        }
+
+        function handleTileTouchStart(ev, viewType) {
+            ev.preventDefault(); ev.stopPropagation();
+            const tile = ev.target.closest('.letter-tile');
+            if (!tile || !tile.parentElement || tile.parentElement.id !== 'letterTilesBB') {
+                 if (selectedTileBB) selectedTileBB.classList.remove('selected'); selectedTileBB = null; return;
+            }
+            if (selectedTileBB === tile) {
+                selectedTileBB.classList.remove('selected'); selectedTileBB = null;
+                if (cloneElementBB) cloneElementBB.remove(); cloneElementBB = null; return;
+            } else if (selectedTileBB) {
+                selectedTileBB.classList.remove('selected');
+                if (cloneElementBB) cloneElementBB.remove(); cloneElementBB = null;
+            }
+            selectedTileBB = tile; selectedTileBB.classList.add('selected'); touchElementBB = tile;
+            const touch = ev.changedTouches[0]; touchStartXBB = touch.clientX; touchStartYBB = touch.clientY;
+            let newClone = tile.cloneNode(true);
+            Object.assign(newClone.style, { position: 'absolute', opacity: '0.7', zIndex: '10000', pointerEvents: 'none' });
+            const rect = tile.getBoundingClientRect();
+            Object.assign(newClone.style, { left: `${rect.left}px`, top: `${rect.top}px`, width: `${rect.width}px`, height: `${rect.height}px` });
+            document.body.appendChild(newClone); cloneElementBB = newClone;
+        }
+
+        function handleTileTouchMove(ev, viewType) {
+            ev.preventDefault(); ev.stopPropagation();
+            if (!cloneElementBB || !touchElementBB) return;
+            const touch = ev.changedTouches[0];
+            cloneElementBB.style.left = `${touch.clientX - (cloneElementBB.offsetWidth / 2)}px`;
+            cloneElementBB.style.top = `${touch.clientY - (cloneElementBB.offsetHeight / 2)}px`;
+        }
+
+        function handleTileTouchEnd(ev, viewType) {
+            ev.preventDefault(); ev.stopPropagation();
+            if (!touchElementBB || !cloneElementBB) {
+                if(cloneElementBB) cloneElementBB.remove(); cloneElementBB = null; touchElementBB = null; return;
+            }
+            const touch = ev.changedTouches[0]; const dropZone = document.getElementById('dropZoneBB');
+            cloneElementBB.style.visibility = 'hidden';
+            const elementUnderneath = document.elementFromPoint(touch.clientX, touch.clientY);
+            cloneElementBB.style.visibility = 'visible';
+            if (elementUnderneath && (elementUnderneath === dropZone || dropZone.contains(elementUnderneath))) {
+                if (selectedTileBB !== touchElementBB && touchElementBB.classList.contains('letter-tile')) {
+                    if(selectedTileBB) selectedTileBB.classList.remove('selected');
+                    selectedTileBB = touchElementBB; selectedTileBB.classList.add('selected');
+                }
+                dropTile(ev, 'BB');
+            } else {
+                if (selectedTileBB === touchElementBB) { selectedTileBB.classList.remove('selected'); selectedTileBB = null; }
+            }
+            cloneElementBB.remove(); cloneElementBB = null; touchElementBB = null;
+        }
+
+        function handleDropZoneTouch(ev, viewType) {
+            ev.stopPropagation();
+            if (selectedTileBB && selectedTileBB.parentElement && selectedTileBB.parentElement.id === 'letterTilesBB') {
+                dropTile(ev, 'BB');
+            } else if (selectedTileBB) {
+                selectedTileBB.classList.remove('selected'); selectedTileBB = null;
+            }
+        }
+
+        // --- DATA MANAGEMENT (LOCAL STORAGE) ---
+
+        function saveProgressBB(isCorrect, word, attemptId) {
+            const studentName = document.getElementById('studentNameBB').value.trim();
+            const adultName = document.getElementById('adultNameBB').value.trim();
+            const verbalSupportSelect = document.getElementById('verbalSupportLevelBB');
+            const visualSupportSelect = document.getElementById('visualSupportLevelBB');
+
+            if (!attemptId) {
+                alert("Error: Cannot save progress without an active word attempt ID. Please generate a word first.");
+                return;
+            }
+
+            const entryData = {
+                studentName: studentName || "N/A",
+                adultName: adultName || "N/A",
+                word: word,
+                timestamp: new Date().toISOString(), // Use current time
+                verbalSupportLevel: verbalSupportSelect.value,
+                verbalSupportDescription: verbalSupportSelect.options[verbalSupportSelect.selectedIndex].text,
+                visualSupportLevel: visualSupportSelect.value,
+                visualSupportDescription: visualSupportSelect.options[visualSupportSelect.selectedIndex].text,
+                accuracy: isCorrect,
+                sourceView: "BB",
+                attemptId: attemptId
+            };
+
+            progressDataBB.push(entryData);
+            // Sort data by timestamp descending, so newest is always first
+            progressDataBB.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+            
+            try {
+                localStorage.setItem('m5BlendingBoardProgressData', JSON.stringify(progressDataBB));
+                console.log("Blending Board progress saved to browser's local storage.");
+            } catch (e) {
+                console.error("Error saving Blending Board progress to local storage:", e);
+                alert("Error saving Blending Board progress. The browser's storage might be full.");
+            }
+        }
+
+        function loadProgressDataBB() {
+            console.log("Attempting to load Blending Board progress data from local storage...");
+            try {
+                const storedData = localStorage.getItem('m5BlendingBoardProgressData');
+                if (storedData) {
+                    progressDataBB = JSON.parse(storedData);
+                    console.log("Blending Board progress data loaded. Count:", progressDataBB.length);
+                } else {
+                    progressDataBB = [];
+                    console.log("No saved Blending Board data found in local storage.");
+                }
+            } catch (error) {
+                console.error("Error loading Blending Board progress data from local storage: ", error);
+                alert("Could not load Blending Board progress data. Saved data might be corrupt.");
+                progressDataBB = [];
+            }
+        }
+
+        function handleResetSessionDataBB() {
+            // Confirm with the user before deleting data.
+            if (confirm("Are you sure you want to reset all session data? This will delete all saved records from this browser and cannot be undone.")) {
+                try {
+                    localStorage.removeItem('m5BlendingBoardProgressData');
+                    progressDataBB = []; // Clear the in-memory array
+                    clearBlendingBoardInterface(); // Clear the current view
+                    alert("All Blending Board session data has been reset from the browser's storage.");
+                    closeReportModal(); // Close the report modal if it's open
+                } catch (error) {
+                    console.error("Error resetting Blending Board session data: ", error);
+                    alert("Error resetting Blending Board data. Check console for errors.");
+                }
+            }
+        }
+
+        function handleAdminDownloadAllDataBB() {
+            const password = prompt("To download all Blending Board data, enter admin password:", "");
+            if (password === "1234") {
+                loadProgressDataBB(); // Ensure we have the latest data
+                exportReportCSV(true);
+            } else if (password !== null) {
+                alert("Incorrect admin password.");
+            }
+        }
+
+        // --- REPORTING FUNCTIONS ---
+
+        function formatDate(isoString) {
+            if (!isoString) return 'N/A';
+            const date = new Date(isoString);
+            return date.toLocaleString('en-US', { year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', hour12: true });
+        }
+        
+        function showReportModalBB() {
+            loadProgressDataBB(); // Load fresh data from local storage before showing report
+
+            const rc = document.getElementById('reportContent'); rc.innerHTML = '';
+            if (progressDataBB.length === 0) {
+                rc.innerHTML = '<p class="no-data-message">No Blending Board data to report.</p>';
+            } else {
+                let tableHTML = `<table class="report-table"><thead><tr><th>#</th><th>Student</th><th>Adult</th><th>Word</th><th>Date</th><th>Verbal</th><th>Visual</th><th>Result</th></tr></thead><tbody>`;
+                progressDataBB.forEach((e, i) => {
+                    tableHTML += `<tr><td>${i+1}</td><td>${e.studentName}</td><td>${e.adultName}</td><td>${e.word}</td><td class="formatted-date">${formatDate(e.timestamp)}</td><td>${e.verbalSupportDescription}</td><td>${e.visualSupportDescription}</td><td class="${e.accuracy?'report-status-correct':'report-status-incorrect'}">${e.accuracy?'Correct':'Incorrect'}</td></tr>`;
+                });
+                tableHTML += `</tbody></table>`;
+                rc.innerHTML = tableHTML;
+            }
+            reportModal.style.display = 'block';
+        }
+
+        function closeReportModal() {
+             const modalToClose = document.getElementById('reportModal');
+             if(modalToClose) modalToClose.style.display = 'none';
+        }
+
+        function generateReportText(isMasterLog = false) {
+            if (progressDataBB.length === 0) return "No Blending Board progress data available.";
+            let reportText = "M5 Blending Board Progress Report\n\n";
+            const headers = isMasterLog 
+                ? ["#", "Student", "Adult", "Word", "Date & Time", "Verbal Support", "Visual Support", "Result", "Attempt ID"] 
+                : ["#", "Student", "Adult", "Word", "Date & Time", "Verbal Support", "Visual Support", "Result"];
+            reportText += headers.join(" | ") + "\n" + Array(140).join("-") + "\n";
+            
+            progressDataBB.forEach((entry, index) => {
+                let row = [
+                    String(index + 1).padEnd(2),
+                    String(entry.studentName).padEnd(15),
+                    String(entry.adultName).padEnd(10),
+                    String(entry.word).padEnd(15),
+                    formatDate(entry.timestamp).padEnd(22),
+                    entry.verbalSupportDescription.padEnd(30),
+                    entry.visualSupportDescription.padEnd(30),
+                    (entry.accuracy ? 'Correct' : 'Incorrect')
+                ];
+                if (isMasterLog) {
+                    row.push(entry.attemptId || 'N/A');
+                }
+                reportText += row.join(" | ") + "\n";
+            });
+            return reportText;
+        }
+
+        function copyReportText() {
+            const reportText = generateReportText(false);
+            if (reportText.startsWith("No")) { alert(reportText); return; }
+            copyToClipboard(reportText, "Blending Board report text copied.");
+        }
+
+        function copyToClipboard(text, message = 'Copied!') {
+            if (navigator.clipboard && navigator.clipboard.writeText) {
+                navigator.clipboard.writeText(text).then(() => alert(message))
+                    .catch(err => {
+                        console.error('Async copy failed: ', err);
+                        fallbackCopyToClipboard(text, message);
+                    });
+            } else {
+                fallbackCopyToClipboard(text, message);
+            }
+        }
+        function fallbackCopyToClipboard(text, message) {
+            const ta = document.createElement('textarea');
+            ta.value = text;
+            Object.assign(ta.style, { position: 'fixed', top: '0', left: '0', opacity: '0' });
+            document.body.appendChild(ta);
+            ta.select();
+            try {
+                if (document.execCommand('copy')) {
+                    alert(message);
+                } else {
+                    alert('Fallback copy failed.');
+                }
+            } catch (err) {
+                console.error('Fallback copy error', err);
+                alert('Fallback copy error.');
+            }
+            document.body.removeChild(ta);
+        }
+
+        function exportReportCSV(isMasterLog = false) {
+            if (progressDataBB.length === 0) { alert('No Blending Board data to export.'); return; }
+            const fmt = (f) => `"${String(f==null?'':f).replace(/"/g,'""')}"`;
+            let csv = '';
+            const hdrs = isMasterLog
+                ? ['#','Student','Adult','Word','Date','Verbal Support','Visual Support','Result','Attempt ID']
+                : ['#','Student','Adult','Word','Date','Verbal Support','Visual Support','Result'];
+            csv += hdrs.map(fmt).join(',') + '\n';
+            progressDataBB.forEach((e, i) => {
+                let r = [i+1,e.studentName,e.adultName,e.word,formatDate(e.timestamp),e.verbalSupportDescription,e.visualSupportDescription,(e.accuracy?'Correct':'Incorrect')];
+                if(isMasterLog){
+                    r.push(e.attemptId || 'N/A');
+                }
+                csv+=r.map(fmt).join(',')+'\n';
+            });
+            const blob=new Blob([csv],{type:'text/csv;charset=utf-8;'});
+            const link=document.createElement('a');
+            const fn=isMasterLog?'m5_blending_board_master_log.csv':'m5_blending_board_report.csv';
+            if(navigator.msSaveBlob){navigator.msSaveBlob(blob,fn);}
+            else{
+                const url=URL.createObjectURL(blob);
+                link.href=url;link.download=fn;
+                document.body.appendChild(link);link.click();
+                document.body.removeChild(link);URL.revokeObjectURL(url);
+            }
+        }
+        
+        function printReport() {
+            window.print();
+        }
+        
+        function printCurrentViewBB() {
+            showReportModalBB();
+            setTimeout(window.print, 300);
+        }
+
+        function launchConfetti() {
+            const cont = document.body;
+            for(let i=0;i<60;i++){
+                const p=document.createElement('div');
+                const size = Math.random()*10+5;
+                p.style.cssText=`position:fixed;left:${Math.random()*100}vw;top:${Math.random()*-60+0}vh;width:${size}px;height:${size}px;background:hsl(${Math.random()*360},100%,60%);opacity:.9;z-index:10001;border-radius:${Math.random()>0.5?'50%':'0'};transform:rotate(${Math.random()*360}deg);`;
+                cont.appendChild(p);
+                p.animate([
+                    {transform:`translateY(0) rotate(${Math.random()*360}deg)`,opacity:1},
+                    {transform:`translateY(130vh) rotate(${Math.random()*1000+360}deg)`,opacity:0}
+                ],{duration:Math.random()*2500+3500,easing:'cubic-bezier(0.1,0.5,0.5,1)',delay:Math.random()*300,iterations:1,fill:'forwards'});
+                setTimeout(()=>p.remove(),6500);
+            }
+        }
+
+        // Initialize Blending Board
+        initializeBlendingBoard();
+
+    </script>
+</body>
+</html>
