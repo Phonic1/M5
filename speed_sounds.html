@@ -1,0 +1,1920 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Speed Sounds - Phonics Mastery System</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700;800&display=swap" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <style>
+        body {
+            font-family: 'Sassoon Primary', 'Poppins', 'Comic Sans MS', Arial, sans-serif;
+            margin: 0;
+            background-color: #ffffff;
+            height: 100vh;
+            overflow: hidden;
+            touch-action: manipulation;
+        }
+
+        .watermark {
+            position: fixed;
+            bottom: 10px;
+            right: 10px;
+            font-size: 12px;
+            color: #6b7280;
+            opacity: 0.7;
+            font-family: 'Sassoon Primary', 'Comic Sans MS', Arial, sans-serif;
+            pointer-events: none;
+            z-index: 1000;
+        }
+
+        /* Speed Sound Deck Styles */
+        .speed-sound-deck {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+        }
+
+        .flashcard-container {
+            width: 100%;
+            height: 70%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            position: relative;
+        }
+
+        .flashcard {
+            width: 80vw;
+            height: 100vw;
+            max-width: 800px;
+            max-height: 1000px;
+            position: absolute;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background-color: #ffffff;
+            border: 1px solid #d2d2d7;
+            border-radius: 12px;
+            color: #1d1d1f;
+            text-align: center;
+            padding: 20px;
+            box-sizing: border-box;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+            user-select: none;
+            touch-action: none;
+            z-index: 1;
+            opacity: 1;
+        }
+
+        .flashcard.active {
+            z-index: 2;
+        }
+
+        .flashcard.fade-out {
+            animation: fadeOut 0.3s forwards;
+        }
+
+        .flashcard.fade-in {
+            animation: fadeIn 0.3s forwards;
+        }
+
+        @keyframes fadeOut {
+            0% { opacity: 1; }
+            100% { opacity: 0; }
+        }
+
+        @keyframes fadeIn {
+            0% { opacity: 0; }
+            100% { opacity: 1; }
+        }
+
+        .set-title {
+            font-size: 48px;
+            font-weight: bold;
+            color: #007aff;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100%;
+        }
+
+        .sound-text {
+            font-size: 288px;
+            font-weight: 400;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100%;
+            line-height: 1;
+            font-family: 'Poppins', 'Sassoon Primary', sans-serif;
+            transition: all 0.3s ease;
+            color: #1d1d1f;
+        }
+
+        .nav-controls {
+            position: absolute;
+            left: 10px;
+            bottom: 100px;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            z-index: 3;
+        }
+
+        .set-controls {
+            position: absolute;
+            left: 10px;
+            top: 10px;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            z-index: 3;
+        }
+
+        .reset-control {
+            position: absolute;
+            left: 10px;
+            bottom: 10px;
+            z-index: 3;
+        }
+
+        .ssd-button {
+            width: 50px;
+            height: 50px;
+            cursor: pointer;
+            border: none;
+            border-radius: 8px;
+            font-family: 'Sassoon Primary', 'Comic Sans MS', Arial, sans-serif;
+            font-size: 24px;
+            font-weight: 500;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            transition: background-color 0.3s, transform 0.1s;
+        }
+
+        .set-controls .ssd-button {
+            width: 60px;
+            height: 40px;
+            font-size: 16px;
+            background-color: #34c759;
+            color: white;
+        }
+
+        .ssd-button:hover {
+            transform: translateY(-1px);
+        }
+
+        #prevBtn {
+            background-color: #ff9500;
+            color: white;
+        }
+
+        #nextBtn {
+            background-color: #007aff;
+            color: white;
+        }
+
+        #resetBtn { /* For SSD Reset */
+            background-color: #af52de;
+            color: white;
+            width: 120px;
+            height: 80px;
+            font-size: 16px;
+        }
+        
+        /* Responsive Styles for Speed Sound Deck */
+        @media (max-width: 768px) {
+            .flashcard-container {
+                height: 60%;
+            }
+            .sound-text {
+                font-size: 192px;
+            }
+            .set-title {
+                font-size: 36px;
+            }
+            .ssd-button {
+                width: 40px;
+                height: 40px;
+                font-size: 20px;
+            }
+            .set-controls .ssd-button {
+                width: 50px;
+                height: 30px;
+                font-size: 14px;
+            }
+            #resetBtn { /* For SSD Reset */
+                width: 100px;
+                height: 60px;
+                font-size: 14px;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .flashcard-container {
+                height: 50%;
+            }
+            .sound-text {
+                font-size: 144px;
+            }
+            .set-title {
+                font-size: 24px;
+            }
+            .ssd-button {
+                width: 35px;
+                height: 35px;
+                font-size: 18px;
+            }
+            .set-controls .ssd-button {
+                width: 45px;
+                height: 25px;
+                font-size: 12px;
+            }
+            #resetBtn { /* For SSD Reset */
+                width: 90px;
+                height: 50px;
+                font-size: 12px;
+            }
+        }
+        .hidden { /* Kept for potential dynamic use within SSD if needed */
+            display: none !important;
+        }
+
+        /* Progress Ring */
+        .progress-ring {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            width: 80px;
+            height: 80px;
+            z-index: 10;
+        }
+
+        .progress-ring-circle {
+            transition: stroke-dashoffset 0.5s ease;
+            transform: rotate(-90deg);
+            transform-origin: 50% 50%;
+        }
+
+        .progress-text {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 18px;
+            font-weight: 700;
+            font-family: 'Poppins', sans-serif;
+            color: #007aff;
+        }
+
+        /* Student Name Input */
+        .student-name-section {
+            position: absolute;
+            top: 120px;
+            right: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 8px;
+            z-index: 10;
+        }
+
+        .student-name-label {
+            font-size: 12px;
+            font-weight: 600;
+            font-family: 'Poppins', sans-serif;
+            color: #666;
+            margin: 0;
+        }
+
+        .student-name-input {
+            padding: 6px 10px;
+            border: 1px solid #e0e0e0;
+            border-radius: 6px;
+            font-family: 'Poppins', sans-serif;
+            font-size: 14px;
+            width: 140px;
+            outline: none;
+            transition: border-color 0.3s;
+            text-align: center;
+        }
+
+        .student-name-input:focus {
+            border-color: #007aff;
+        }
+
+        /* Contrast Control - Apple Style */
+        .contrast-control {
+            position: absolute;
+            bottom: 20px;
+            right: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 12px;
+            z-index: 10;
+            background: rgba(255, 255, 255, 0.9);
+            backdrop-filter: blur(10px);
+            border-radius: 16px;
+            padding: 12px 16px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .contrast-label {
+            font-size: 12px;
+            font-weight: 600;
+            font-family: 'Poppins', sans-serif;
+            color: #1d1d1f;
+            margin: 0;
+            letter-spacing: -0.01em;
+        }
+
+        .contrast-toggle {
+            width: 44px;
+            height: 24px;
+            border-radius: 12px;
+            border: none;
+            background: #e5e5ea;
+            cursor: pointer;
+            position: relative;
+            transition: all 0.3s ease;
+            outline: none;
+        }
+
+        .contrast-toggle.active {
+            background: #34c759;
+        }
+
+        .toggle-indicator {
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: white;
+            position: absolute;
+            top: 2px;
+            left: 2px;
+            transition: all 0.3s ease;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+        }
+
+        .contrast-toggle.active .toggle-indicator {
+            left: 22px;
+        }
+
+        .contrast-text {
+            font-size: 11px;
+            font-weight: 500;
+            font-family: 'Poppins', sans-serif;
+            color: #86868b;
+            letter-spacing: -0.01em;
+            transition: color 0.3s ease;
+        }
+
+        /* High contrast mode indicator */
+        .contrast-control.high-contrast-mode .contrast-text {
+            color: #ff3b30;
+            font-weight: 600;
+        }
+
+        .contrast-control.high-contrast-mode .contrast-toggle {
+            background: #ff3b30;
+        }
+
+        /* High Contrast Mode */
+        .high-contrast {
+            background: #000000 !important;
+        }
+
+        .high-contrast .flashcard {
+            background: #000000;
+            border: 4px solid #000000;
+        }
+
+        .high-contrast .sound-text {
+            color: #ffcc00 !important;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.8);
+            font-weight: 600;
+        }
+
+        .high-contrast .set-title {
+            color: #ffcc00 !important;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.8);
+        }
+
+        /* Mastery Indicators */
+        .mastery-indicators {
+            position: absolute;
+            bottom: 160px;
+            right: 20px;
+            display: flex;
+            gap: 15px;
+            z-index: 10;
+        }
+
+        .mastery-btn {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            border: none;
+            font-size: 28px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+        }
+
+        .mastery-btn:hover {
+            transform: scale(1.1);
+        }
+
+        .mastery-btn:active {
+            transform: scale(0.95);
+        }
+
+        .mastery-btn.know {
+            background: linear-gradient(135deg, #34c759, #30d158);
+            color: white;
+        }
+
+        .mastery-btn.practice {
+            background: linear-gradient(135deg, #ff3b30, #ff453a);
+            color: white;
+        }
+
+        /* Mode Toggle */
+        .mode-toggle {
+            position: absolute;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: white;
+            border-radius: 12px;
+            padding: 8px;
+            display: flex;
+            gap: 8px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            z-index: 10;
+        }
+
+        .mode-btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 8px;
+            font-family: 'Poppins', sans-serif;
+            font-weight: 600;
+            font-size: 14px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            background: transparent;
+            color: #666;
+        }
+
+        .mode-btn.active {
+            background: linear-gradient(135deg, #007aff, #0051d5);
+            color: white;
+        }
+
+        /* Teacher Dashboard */
+        .teacher-dashboard {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100vh;
+            background: white;
+            z-index: 1000;
+            overflow-y: auto;
+            padding: 40px;
+            box-sizing: border-box;
+        }
+
+        .teacher-dashboard.active {
+            display: block;
+        }
+
+        .dashboard-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 40px;
+        }
+
+        .dashboard-title {
+            font-family: 'Poppins', sans-serif;
+            font-size: 32px;
+            font-weight: 700;
+            color: #1d1d1f;
+        }
+
+        .close-dashboard {
+            padding: 12px 24px;
+            background: #ff3b30;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-family: 'Poppins', sans-serif;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .close-dashboard:hover {
+            background: #ff453a;
+            transform: translateY(-2px);
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin-bottom: 40px;
+        }
+
+        .stat-card {
+            background: linear-gradient(135deg, #f5f5f7, #ffffff);
+            padding: 30px;
+            border-radius: 16px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+            text-align: center;
+        }
+
+        .stat-number {
+            font-size: 48px;
+            font-weight: 700;
+            font-family: 'Poppins', sans-serif;
+            color: #007aff;
+            display: block;
+            margin-bottom: 8px;
+        }
+
+        .stat-label {
+            font-size: 14px;
+            color: #666;
+            font-weight: 600;
+        }
+
+        .sound-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(80px, 1fr));
+            gap: 12px;
+            margin-top: 30px;
+        }
+
+        .sound-item {
+            aspect-ratio: 1;
+            background: white;
+            border-radius: 12px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            font-size: 32px;
+            font-weight: 700;
+            font-family: 'Poppins', sans-serif;
+            border: 3px solid #e0e0e0;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            position: relative;
+        }
+
+        .sound-item:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 8px 20px rgba(0,0,0,0.15);
+        }
+
+        .sound-item.mastered {
+            background: linear-gradient(135deg, #34c759, #30d158);
+            color: white;
+            border-color: #34c759;
+        }
+
+        .sound-item.needs-practice {
+            background: linear-gradient(135deg, #ff9500, #ffb340);
+            color: white;
+            border-color: #ff9500;
+        }
+
+        .sound-item.unknown {
+            background: #f5f5f7;
+            color: #666;
+        }
+
+        .sound-status {
+            position: absolute;
+            bottom: 4px;
+            right: 4px;
+            font-size: 16px;
+        }
+
+        .export-btn {
+            padding: 15px 30px;
+            background: linear-gradient(135deg, #34c759, #30d158);
+            color: white;
+            border: none;
+            border-radius: 12px;
+            font-family: 'Poppins', sans-serif;
+            font-weight: 600;
+            font-size: 16px;
+            cursor: pointer;
+            transition: all 0.3s;
+            margin-top: 20px;
+        }
+
+        .export-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(52, 199, 89, 0.3);
+        }
+
+        /* Audio Indicator */
+        .audio-indicator {
+            display: none; /* Hidden - TTS removed */
+        }
+
+        /* Celebration */
+        .celebration {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 120px;
+            z-index: 2000;
+            pointer-events: none;
+            opacity: 0;
+        }
+
+        .celebration.show {
+            animation: celebrate 1.5s ease-out;
+        }
+
+        @keyframes celebrate {
+            0% {
+                opacity: 0;
+                transform: translate(-50%, -50%) scale(0) rotate(0deg);
+            }
+            50% {
+                opacity: 1;
+                transform: translate(-50%, -50%) scale(1.5) rotate(180deg);
+            }
+            100% {
+                opacity: 0;
+                transform: translate(-50%, -50%) scale(1) rotate(360deg);
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Mode Toggle -->
+    <div class="mode-toggle">
+        <button id="sequentialMode" class="mode-btn active">Sequential</button>
+        <button id="practiceMode" class="mode-btn">Smart Practice</button>
+        <button id="teacherMode" class="mode-btn">Teacher</button>
+    </div>
+
+    <div id="speedSoundDeck" class="speed-sound-deck">
+        <!-- Progress Ring -->
+        <div class="progress-ring">
+            <svg width="80" height="80">
+                <circle cx="40" cy="40" r="35" stroke="#e0e0e0" stroke-width="6" fill="none"/>
+                <circle id="progressCircle" cx="40" cy="40" r="35" stroke="#007aff" stroke-width="6" 
+                        fill="none" stroke-dasharray="220" stroke-dashoffset="220" class="progress-ring-circle"/>
+            </svg>
+            <div class="progress-text" id="progressText">0%</div>
+        </div>
+
+        <!-- Student Name Input -->
+        <div class="student-name-section">
+            <label class="student-name-label" for="mainStudentName">Student</label>
+            <input type="text" id="mainStudentName" class="student-name-input" placeholder="Name">
+        </div>
+
+        <div class="flashcard-container" id="flashcardContainer">
+            <div class="flashcard active" id="currentCard"></div>
+        </div>
+
+        <!-- Mastery Indicators -->
+        <div class="mastery-indicators">
+            <button id="practiceBtn" class="mastery-btn practice" title="Needs Practice (X)">✗</button>
+            <button id="knowBtn" class="mastery-btn know" title="I Know This! (✓)">✓</button>
+        </div>
+
+        <div class="set-controls">
+            <button id="set1Btn" class="ssd-button">Set 1</button>
+            <button id="set2Btn" class="ssd-button">Set 2</button>
+            <button id="set3Btn" class="ssd-button">Set 3</button>
+            <button id="homeBtnSSD" class="ssd-button" style="background-color: #ff3b30;">Reset</button>
+        </div>
+        <div class="nav-controls">
+            <button id="prevBtn" class="ssd-button">←</button>
+            <button id="nextBtn" class="ssd-button">→</button>
+        </div>
+        <div class="reset-control">
+            <button id="resetBtn" class="ssd-button">Dashboard</button>
+        </div>
+        
+        <!-- Contrast Toggle -->
+        <div class="contrast-control">
+            <label for="contrastToggle" class="contrast-label">Contrast</label>
+            <button type="button" id="contrastToggle" class="contrast-toggle">
+                <span class="toggle-indicator"></span>
+            </button>
+            <span class="contrast-text">Low</span>
+        </div>
+    </div>
+
+    <!-- Teacher Dashboard -->
+    <div class="teacher-dashboard" id="teacherDashboard">
+        <div class="dashboard-header">
+            <div class="dashboard-title">📊 Phonics Mastery Dashboard</div>
+            <button class="close-dashboard" id="closeDashboard">Close</button>
+        </div>
+
+        <div class="stats-grid">
+            <div class="stat-card">
+                <span class="stat-number" id="totalSounds">0</span>
+                <span class="stat-label">Total Sounds</span>
+            </div>
+            <div class="stat-card">
+                <span class="stat-number" id="masteredSounds">0</span>
+                <span class="stat-label">Mastered</span>
+            </div>
+            <div class="stat-card">
+                <span class="stat-number" id="practiceSounds">0</span>
+                <span class="stat-label">Needs Practice</span>
+            </div>
+            <div class="stat-card">
+                <span class="stat-number" id="masteryPercent">0%</span>
+                <span class="stat-label">Mastery Rate</span>
+            </div>
+        </div>
+
+        <h3 style="font-family: 'Poppins', sans-serif; color: #1d1d1f; margin-bottom: 20px;">Set 1 Sounds</h3>
+        <div class="sound-grid" id="set1Grid"></div>
+
+        <h3 style="font-family: 'Poppins', sans-serif; color: #1d1d1f; margin: 40px 0 20px;">Set 2 Sounds</h3>
+        <div class="sound-grid" id="set2Grid"></div>
+
+        <h3 style="font-family: 'Poppins', sans-serif; color: #1d1d1f; margin: 40px 0 20px;">Set 3 Sounds</h3>
+        <div class="sound-grid" id="set3Grid"></div>
+
+        <button class="export-btn" id="exportProgress">📥 Export CSV</button>
+        <button class="export-btn" id="printReport" style="background: linear-gradient(135deg, #34c759, #30d158);">🖨️ Print Report</button>
+        <button class="export-btn" id="masterReset" style="background: linear-gradient(135deg, #ff3b30, #ff453a);">🔄 Master Reset</button>
+    </div>
+
+    <!-- Celebration Element -->
+    <div class="celebration" id="celebration">🎉</div>
+
+    <div class="watermark">Speed Sounds Mastery ©</div>
+
+    <script>
+        // ======================
+        // DATA & CONFIGURATION
+        // ======================
+        const sets = [
+            {
+                name: "Set 1",
+                sounds: [
+                    "a", "e", "i", "o", "u",
+                    "m", "s", "d", "t", "n", "p", "g", "c", "k", "b", "f",
+                    "l", "h", "r", "j", "v", "y", "w", "z", "x", "sh", "th",
+                    "ch", "qu", "ng", "nk"
+                ]
+            },
+            {
+                name: "Set 2",
+                sounds: ["ay", "ee", "igh", "ow", "oo", "oo", "ar", "or", "air", "ir", "ou", "oy"]
+            },
+            {
+                name: "Set 3",
+                sounds: [
+                    "ea", "oi", "a-e", "i-e", "o-e", "u-e", "aw", "are", "ur", "er",
+                    "ow", "ai", "oa", "ew", "ire", "ear", "ure", "tion", "tious/cious"
+                ]
+            }
+        ];
+
+        const vowels = ['a', 'e', 'i', 'o', 'u'];
+        const digraphs = ['sh', 'th', 'ch', 'qu', 'ng', 'nk', 'ay', 'ee', 'igh', 'ow', 'oo', 'ar', 'or', 'air', 'ir', 'ou', 'oy', 'ea', 'oi', 'a-e', 'i-e', 'o-e', 'u-e', 'aw', 'are', 'ur', 'er', 'ai', 'oa', 'ew', 'ire', 'ear', 'ure', 'tion', 'tious/cious'];
+
+        // Phonetic pronunciation mapping - optimized for Web Speech API
+        const phoneticMap = {
+            // Short vowels (spoken as isolated sounds)
+            'a': 'a. a. a.',  // /æ/ as in apple
+            'e': 'eh. eh. eh.',  // /ɛ/ as in egg
+            'i': 'ih. ih. ih.',  // /ɪ/ as in insect
+            'o': 'o. o. o.',  // /ɒ/ as in orange
+            'u': 'uh. uh. uh.',  // /ʌ/ as in umbrella
+            
+            // Consonants (continuous sounds with repetition)
+            'm': 'mmm',  // /m/
+            's': 'sss',  // /s/
+            'f': 'fff',  // /f/
+            'l': 'lll',  // /l/
+            'n': 'nnn',  // /n/
+            'r': 'rrr',  // /ɹ/
+            'v': 'vvv',  // /v/
+            'z': 'zzz',  // /z/
+            'h': 'hhh',  // /h/
+            
+            // Plosives (short, sharp sounds)
+            'd': 'duh',  // /d/
+            't': 'tuh',  // /t/
+            'p': 'puh',  // /p/
+            'g': 'guh',  // /ɡ/
+            'c': 'kuh',  // /k/
+            'k': 'kuh',  // /k/
+            'b': 'buh',  // /b/
+            
+            // Special consonants
+            'j': 'juh',  // /d͡ʒ/
+            'y': 'yuh',  // /j/
+            'w': 'wuh',  // /w/
+            'x': 'ks. ks.',  // /ks/
+            
+            // Digraphs
+            'sh': 'shh. shh. shh.',  // /ʃ/
+            'th': 'th. th. th.',  // /θ/
+            'ch': 'ch. ch. ch.',  // /t͡ʃ/
+            'qu': 'kwuh',  // /kw/
+            'ng': 'ng. ng. ng.',  // /ŋ/
+            'nk': 'nk. nk.',  // /ŋk/
+            
+            // Set 2 - Long vowels and vowel teams
+            'ay': 'ay. ay.',  // /eɪ/
+            'ee': 'ee. ee.',  // /iː/
+            'igh': 'eye. eye.',  // /aɪ/
+            'ow': 'oh. oh.',  // /əʊ/
+            'oo': 'oo. oo.',  // /uː/ or /ʊ/
+            'ar': 'ar. ar.',  // /ɑː/
+            'or': 'or. or.',  // /ɔː/
+            'air': 'air. air.',  // /eə/
+            'ir': 'er. er.',  // /ɜː/
+            'ou': 'ow. ow.',  // /aʊ/
+            'oy': 'oy. oy.',  // /ɔɪ/
+            
+            // Set 3 - Split digraphs and alternatives
+            'ea': 'ee. ee.',  // /iː/
+            'oi': 'oy. oy.',  // /ɔɪ/
+            'a-e': 'ay. ay.',  // /eɪ/
+            'i-e': 'eye. eye.',  // /aɪ/
+            'o-e': 'oh. oh.',  // /əʊ/
+            'u-e': 'yoo. yoo.',  // /juː/
+            'aw': 'or. or.',  // /ɔː/
+            'are': 'air. air.',  // /eə/
+            'ur': 'er. er.',  // /ɜː/
+            'er': 'er. er.',  // /ə/
+            'ai': 'ay. ay.',  // /eɪ/
+            'oa': 'oh. oh.',  // /əʊ/
+            'ew': 'yoo. yoo.',  // /juː/
+            'ire': 'eye er',  // /aɪə/
+            'ear': 'eer. eer.',  // /ɪə/
+            'ure': 'yoor. yoor.',  // /jʊə/
+            'tion': 'shun. shun.',  // /ʃən/
+            'tious/cious': 'shus. shus.'  // /ʃəs/
+        };
+
+        // State
+        let currentSetIndex = 0;
+        let currentSoundIndex = 0;
+        let showingSetTitle = true;
+        let cardHistory = [];
+        let isTransitioning = false;
+        let ssdInitialized = false;
+        let currentMode = 'sequential'; // 'sequential', 'practice', 'teacher'
+
+        // Mastery data structure
+        const STORAGE_KEY = 'speedSoundsMastery';
+        let masteryData = {};
+
+        function initializeSpeedSoundDeck() {
+            if (ssdInitialized) {
+                 updateCard();
+                 return;
+            }
+            cardHistory = [{ setIndex: 0, soundIndex: 0, isSetTitle: true }];
+            updateCard();
+
+            document.getElementById('prevBtn').addEventListener('click', prevCard);
+            document.getElementById('prevBtn').addEventListener('touchstart', (e) => {e.preventDefault(); prevCard(e);}, { passive: false });
+            
+            document.getElementById('nextBtn').addEventListener('click', nextCard);
+            document.getElementById('nextBtn').addEventListener('touchstart', (e) => {e.preventDefault(); nextCard(e);}, { passive: false });
+            
+            document.getElementById('resetBtn').addEventListener('click', resetCurrentCardView); // Renamed function for clarity
+            document.getElementById('resetBtn').addEventListener('touchstart', (e) => {e.preventDefault(); resetCurrentCardView(e);}, { passive: false });
+            
+            document.getElementById('set1Btn').addEventListener('click', () => goToSet(0));
+            document.getElementById('set1Btn').addEventListener('touchstart', (e) => {e.preventDefault(); goToSet(0);}, { passive: false });
+            
+            document.getElementById('set2Btn').addEventListener('click', () => goToSet(1));
+            document.getElementById('set2Btn').addEventListener('touchstart', (e) => {e.preventDefault(); goToSet(1);}, { passive: false });
+            
+            document.getElementById('set3Btn').addEventListener('click', () => goToSet(2));
+            document.getElementById('set3Btn').addEventListener('touchstart', (e) => {e.preventDefault(); goToSet(2);}, { passive: false });
+
+            // Home button (now "Reset Deck")
+            document.getElementById('homeBtnSSD').addEventListener('click', resetDeckToStart);
+            document.getElementById('homeBtnSSD').addEventListener('touchstart', (e) => {e.preventDefault(); resetDeckToStart(e);}, { passive: false });
+
+            document.addEventListener('keydown', handleSSDKeyPress);
+            ssdInitialized = true;
+        }
+
+        function handleSSDKeyPress(e) {
+            // Check if any input field is focused, if so, don't navigate cards
+            if (document.activeElement && (document.activeElement.tagName === 'INPUT' || document.activeElement.tagName === 'TEXTAREA' || document.activeElement.isContentEditable)) {
+                return;
+            }
+            if (e.key === 'ArrowLeft') {
+                prevCard(e);
+            } else if (e.key === 'ArrowRight') {
+                nextCard(e);
+            }
+        }
+
+        function handleCardClick(e) {
+            e.preventDefault();
+            nextCard(e);
+        }
+
+        function handleCardTap(e) {
+            e.preventDefault();
+            const card = document.getElementById('currentCard');
+            if (!card) return;
+            const rect = card.getBoundingClientRect();
+            const tapX = e.touches[0].clientX - rect.left;
+            const cardWidth = rect.width;
+
+            if (tapX < cardWidth / 2) {
+                prevCard(e);
+            } else {
+                nextCard(e);
+            }
+        }
+
+        function getSoundClass(sound) {
+            if (vowels.includes(sound)) return 'vowel';
+            if (digraphs.includes(sound)) return 'digraph';
+            return 'consonant';
+        }
+
+        function updateCard() {
+            let currentCard = document.getElementById('currentCard');
+            if (!currentCard) {
+                console.error('Current card element not found');
+                const container = document.getElementById('flashcardContainer');
+                if (container && !container.querySelector('.flashcard')) {
+                     const newCardElement = createNewCard();
+                     if (newCardElement) {
+                         currentCard = newCardElement;
+                     } else {
+                        return;
+                     }
+                } else if (!container) {
+                    return;
+                }
+            }
+
+            currentCard.innerHTML = '';
+            currentCard.removeEventListener('click', handleCardClick);
+            currentCard.removeEventListener('touchstart', handleCardTap);
+
+            if (showingSetTitle) {
+                const titleSpan = document.createElement('span');
+                titleSpan.className = 'set-title';
+                titleSpan.textContent = sets[currentSetIndex].name;
+                currentCard.appendChild(titleSpan);
+            } else {
+                const sound = sets[currentSetIndex].sounds[currentSoundIndex];
+                const soundSpan = document.createElement('span');
+                
+                // Special handling for tious/cious
+                if (sound === 'tious/cious') {
+                    soundSpan.innerHTML = '<div style="font-size: 80%; line-height: 1.2;">tious<br>cious</div>';
+                    soundSpan.style.display = 'flex';
+                    soundSpan.style.alignItems = 'center';
+                    soundSpan.style.justifyContent = 'center';
+                    soundSpan.style.height = '100%';
+                } else {
+                    soundSpan.textContent = sound;
+                }
+                
+                soundSpan.className = 'sound-text ' + getSoundClass(sound);
+                currentCard.appendChild(soundSpan);
+            }
+
+            currentCard.addEventListener('click', handleCardClick);
+            currentCard.addEventListener('touchstart', handleCardTap, { passive: false });
+        }
+
+        function createNewCard() {
+            const container = document.getElementById('flashcardContainer');
+            if (!container) {
+                console.error('Flashcard container not found');
+                return null;
+            }
+            const existingCard = container.querySelector('#currentCard');
+            if (existingCard) {
+                existingCard.remove();
+            }
+
+            const newCard = document.createElement('div');
+            newCard.className = 'flashcard active fade-in';
+            newCard.id = 'currentCard';
+            container.appendChild(newCard);
+            return newCard;
+        }
+
+        function goToSet(setIndex) {
+            if (isTransitioning) return;
+            isTransitioning = true;
+
+            let currentCard = document.getElementById('currentCard');
+            if (!currentCard) {
+                console.warn("goToSet: currentCard not found, attempting to create.");
+                const newCreatedCard = createNewCard();
+                if(!newCreatedCard) { isTransitioning = false; return; }
+                currentCard = newCreatedCard;
+                currentSetIndex = setIndex;
+                currentSoundIndex = 0;
+                showingSetTitle = true;
+                cardHistory.push({ setIndex: currentSetIndex, soundIndex: currentSoundIndex, isSetTitle: showingSetTitle });
+                updateCard();
+                isTransitioning = false;
+                return;
+            }
+
+            currentCard.classList.remove('active');
+            currentCard.classList.add('fade-out');
+
+            setTimeout(() => {
+                currentCard.remove();
+                currentSetIndex = setIndex;
+                currentSoundIndex = 0;
+                showingSetTitle = true;
+
+                cardHistory.push({ setIndex: currentSetIndex, soundIndex: currentSoundIndex, isSetTitle: showingSetTitle });
+                const newCardElement = createNewCard();
+                if (newCardElement) updateCard();
+                isTransitioning = false;
+            }, 300);
+        }
+
+        function nextCard(e) {
+            if (e) e.preventDefault();
+            if (isTransitioning) return;
+            isTransitioning = true;
+
+            let currentCard = document.getElementById('currentCard');
+            if (currentCard) {
+                currentCard.classList.remove('active');
+                currentCard.classList.add('fade-out');
+            }
+
+            setTimeout(() => {
+                if (currentCard) currentCard.remove();
+
+                if (currentMode === 'practice') {
+                    // Use smart practice mode
+                    nextCardInPracticeMode();
+                } else {
+                    // Sequential mode (original logic)
+                    if (showingSetTitle) {
+                        showingSetTitle = false;
+                        currentSoundIndex = 0;
+                    } else {
+                        currentSoundIndex++;
+                        if (currentSoundIndex >= sets[currentSetIndex].sounds.length) {
+                            currentSetIndex++;
+                            if (currentSetIndex >= sets.length) {
+                                currentSetIndex = 0;
+                            }
+                            currentSoundIndex = 0;
+                            showingSetTitle = true;
+                        }
+                    }
+
+                    cardHistory.push({ setIndex: currentSetIndex, soundIndex: currentSoundIndex, isSetTitle: showingSetTitle });
+                    createNewCard();
+                    updateCard();
+                }
+                isTransitioning = false;
+            }, 300);
+        }
+
+        function prevCard(e) {
+            if (e) e.preventDefault();
+            if (isTransitioning || cardHistory.length <= 1) {
+                isTransitioning = false;
+                return;
+            }
+            isTransitioning = true;
+
+            let currentCard = document.getElementById('currentCard');
+            let cardWasRecreated = false;
+             if (!currentCard) {
+                console.warn("prevCard: currentCard not found, attempting to create.");
+                const newCreatedCard = createNewCard();
+                if(!newCreatedCard) { isTransitioning = false; return; }
+                currentCard = newCreatedCard;
+                cardWasRecreated = true;
+            } else {
+                currentCard.classList.remove('active');
+                currentCard.classList.add('fade-out');
+            }
+
+            setTimeout(() => {
+                if (!cardWasRecreated && currentCard && currentCard.classList.contains('fade-out')) {
+                    currentCard.remove();
+                }
+                cardHistory.pop();
+                const previousState = cardHistory[cardHistory.length - 1];
+                currentSetIndex = previousState.setIndex;
+                currentSoundIndex = previousState.soundIndex;
+                showingSetTitle = previousState.isSetTitle;
+
+                if (cardWasRecreated) {
+                    updateCard();
+                } else {
+                    const newCardElement = createNewCard();
+                    if (newCardElement) updateCard();
+                }
+                isTransitioning = false;
+            }, cardWasRecreated ? 0 : 300);
+        }
+
+        function resetCurrentCardView(e) { // Resets to the title of the current set
+            if (e) e.preventDefault();
+            if (isTransitioning) return;
+            isTransitioning = true;
+
+            let currentCard = document.getElementById('currentCard');
+            let cardWasRecreated = false;
+            if (!currentCard) {
+                 console.warn("resetCurrentCardView: currentCard not found, attempting to create.");
+                const newCreatedCard = createNewCard();
+                if(!newCreatedCard) { isTransitioning = false; return; }
+                currentCard = newCreatedCard;
+                cardWasRecreated = true;
+            } else {
+                currentCard.classList.remove('active');
+                currentCard.classList.add('fade-out');
+            }
+
+            setTimeout(() => {
+                 if (!cardWasRecreated && currentCard && currentCard.classList.contains('fade-out')) {
+                    currentCard.remove();
+                }
+                // Reset to the title card of the current set
+                showingSetTitle = true;
+                currentSoundIndex = 0; // Index within sounds array, not relevant for set title
+                
+                // Adjust cardHistory: remove entries until we are at a set title or beginning
+                while(cardHistory.length > 1 && (!cardHistory[cardHistory.length-1].isSetTitle || cardHistory[cardHistory.length-1].setIndex !== currentSetIndex)) {
+                    cardHistory.pop();
+                }
+                // If current state isn't the desired one after popping, push the correct one
+                if (cardHistory.length === 0 || cardHistory[cardHistory.length-1].setIndex !== currentSetIndex || !cardHistory[cardHistory.length-1].isSetTitle) {
+                     cardHistory.push({ setIndex: currentSetIndex, soundIndex: 0, isSetTitle: true });
+                }
+
+
+                if (cardWasRecreated) {
+                    updateCard();
+                } else {
+                    const newCardElement = createNewCard();
+                    if (newCardElement) updateCard();
+                }
+                isTransitioning = false;
+            }, cardWasRecreated ? 0 : 300);
+        }
+
+        function resetDeckToStart(e) { // Resets to the very beginning (Set 1 Title)
+            if (e) e.preventDefault();
+            if (isTransitioning) return;
+            isTransitioning = true;
+
+            let currentCard = document.getElementById('currentCard');
+            let cardWasRecreated = false;
+            if (!currentCard) {
+                 console.warn("resetDeckToStart: currentCard not found, attempting to create.");
+                const newCreatedCard = createNewCard();
+                if(!newCreatedCard) { isTransitioning = false; return; }
+                currentCard = newCreatedCard;
+                cardWasRecreated = true;
+            } else {
+                currentCard.classList.remove('active');
+                currentCard.classList.add('fade-out');
+            }
+             setTimeout(() => {
+                 if (!cardWasRecreated && currentCard && currentCard.classList.contains('fade-out')) {
+                    currentCard.remove();
+                }
+                currentSetIndex = 0;
+                currentSoundIndex = 0;
+                showingSetTitle = true;
+                cardHistory = [{ setIndex: 0, soundIndex: 0, isSetTitle: true }];
+
+                if (cardWasRecreated) {
+                    updateCard();
+                } else {
+                    const newCardElement = createNewCard();
+                    if (newCardElement) updateCard();
+                }
+                isTransitioning = false;
+            }, cardWasRecreated ? 0 : 300);
+        }
+
+        // ======================
+        // MASTERY SYSTEM
+        // ======================
+        function loadMasteryData() {
+            initializeMasteryData(); // Initialize with provided data if not exists
+            
+            const STORAGE_KEY = 'speedSoundsMastery';
+            const saved = localStorage.getItem(STORAGE_KEY);
+            if (saved) {
+                masteryData = JSON.parse(saved);
+            } else {
+                // Fallback initialization (shouldn't reach here due to initializeMasteryData)
+                masteryData = {};
+                sets.forEach(set => {
+                    set.sounds.forEach(sound => {
+                        masteryData[sound] = 'unknown';
+                    });
+                });
+            }
+        }
+
+        function saveMasteryData() {
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(masteryData));
+        }
+
+        function getMasteryStatus(sound) {
+            return masteryData[sound] || 'unknown';
+        }
+
+        function setMasteryStatus(sound, status) {
+            masteryData[sound] = status;
+            saveMasteryData();
+            updateProgress();
+        }
+
+        function updateProgress() {
+            const allSounds = sets.flatMap(set => set.sounds);
+            const mastered = allSounds.filter(s => getMasteryStatus(s) === 'mastered').length;
+            const percent = Math.round((mastered / allSounds.length) * 100);
+            
+            document.getElementById('progressText').textContent = percent + '%';
+            const circle = document.getElementById('progressCircle');
+            const offset = 220 - (220 * percent / 100);
+            circle.style.strokeDashoffset = offset;
+        }
+
+        // ======================
+        // AUDIO SYSTEM - REMOVED
+        // ======================
+        // speak() function removed - no TTS
+
+        // ======================
+        // CONTRAST CONTROL
+        // ======================
+        const CONTRAST_KEY = 'speedSoundsContrast';
+        
+        function loadContrastSetting() {
+            const saved = localStorage.getItem(CONTRAST_KEY);
+            const toggle = document.getElementById('contrastToggle');
+            const contrastText = document.querySelector('.contrast-text');
+            const contrastControl = document.querySelector('.contrast-control');
+            
+            if (saved === 'high') {
+                toggle.classList.add('active');
+                document.body.classList.add('high-contrast');
+                contrastControl.classList.add('high-contrast-mode');
+                contrastText.textContent = 'High';
+            } else {
+                toggle.classList.remove('active');
+                document.body.classList.remove('high-contrast');
+                contrastControl.classList.remove('high-contrast-mode');
+                contrastText.textContent = 'Low';
+            }
+        }
+        
+        function saveContrastSetting(isHigh) {
+            const setting = isHigh ? 'high' : 'low';
+            localStorage.setItem(CONTRAST_KEY, setting);
+        }
+        
+        function updateContrast(isHigh) {
+            const contrastText = document.querySelector('.contrast-text');
+            const contrastControl = document.querySelector('.contrast-control');
+            const toggle = document.getElementById('contrastToggle');
+            
+            if (isHigh) {
+                toggle.classList.add('active');
+                document.body.classList.add('high-contrast');
+                contrastControl.classList.add('high-contrast-mode');
+                contrastText.textContent = 'High';
+            } else {
+                toggle.classList.remove('active');
+                document.body.classList.remove('high-contrast');
+                contrastControl.classList.remove('high-contrast-mode');
+                contrastText.textContent = 'Low';
+            }
+            
+            saveContrastSetting(isHigh);
+        }
+        const STUDENT_NAME_KEY = 'speedSoundsStudentName';
+        
+        function saveStudentName() {
+            const name = document.getElementById('mainStudentName').value.trim();
+            if (name) {
+                localStorage.setItem(STUDENT_NAME_KEY, name);
+            }
+        }
+        
+        function loadStudentName() {
+            const saved = localStorage.getItem(STUDENT_NAME_KEY);
+            if (saved) {
+                document.getElementById('mainStudentName').value = saved;
+            }
+        }
+        
+        function getStudentName() {
+            const name = document.getElementById('mainStudentName').value.trim();
+            return name || 'Student';
+        }
+
+        // Initialize with specific mastery data
+        function initializeMasteryData() {
+            const saved = localStorage.getItem(STORAGE_KEY);
+            
+            if (!saved) {
+                // Initialize with the provided mastery statuses
+                const masteryData = {
+                    // Mastered sounds (✓)
+                    'a': 'mastered', 'e': 'mastered', 'i': 'mastered', 'o': 'mastered', 'u': 'mastered',
+                    'm': 'mastered', 'd': 'mastered', 't': 'mastered', 'n': 'mastered', 'p': 'mastered',
+                    'g': 'mastered', 'c': 'mastered', 'k': 'mastered', 'b': 'mastered', 'f': 'mastered',
+                    'l': 'mastered', 'h': 'mastered',
+                    
+                    // Needs practice sounds (✗)
+                    's': 'needs-practice', 'r': 'needs-practice', 'j': 'needs-practice', 'v': 'needs-practice',
+                    'y': 'needs-practice', 'w': 'needs-practice', 'z': 'needs-practice', 'x': 'needs-practice',
+                    'sh': 'needs-practice', 'th': 'needs-practice', 'ch': 'needs-practice', 'qu': 'needs-practice',
+                    'ng': 'needs-practice', 'nk': 'needs-practice',
+                    
+                    // Set 2 and 3 sounds - not assessed yet
+                    'ay': 'unknown', 'ee': 'unknown', 'igh': 'unknown', 'ow': 'unknown', 'oo': 'unknown',
+                    'ar': 'unknown', 'or': 'unknown', 'air': 'unknown', 'ir': 'unknown', 'ou': 'unknown',
+                    'oy': 'unknown', 'ea': 'unknown', 'oi': 'unknown', 'a-e': 'unknown', 'i-e': 'unknown',
+                    'o-e': 'unknown', 'u-e': 'unknown', 'aw': 'unknown', 'are': 'unknown', 'ur': 'unknown',
+                    'er': 'unknown', 'ai': 'unknown', 'oa': 'unknown', 'ew': 'unknown', 'ire': 'unknown',
+                    'ear': 'unknown', 'ure': 'unknown', 'tion': 'unknown', 'tious/cious': 'unknown'
+                };
+                
+                localStorage.setItem(STORAGE_KEY, JSON.stringify(masteryData));
+            }
+        }
+        function openDashboard() {
+            loadStudentName();
+            document.getElementById('teacherDashboard').classList.add('active');
+            updateDashboard();
+        }
+
+        function closeDashboard() {
+            saveStudentName();
+            document.getElementById('teacherDashboard').classList.remove('active');
+        }
+
+        function updateDashboard() {
+            const allSounds = sets.flatMap(set => set.sounds);
+            const mastered = allSounds.filter(s => getMasteryStatus(s) === 'mastered');
+            const needsPractice = allSounds.filter(s => getMasteryStatus(s) === 'needs-practice');
+            
+            document.getElementById('totalSounds').textContent = allSounds.length;
+            document.getElementById('masteredSounds').textContent = mastered.length;
+            document.getElementById('practiceSounds').textContent = needsPractice.length;
+            document.getElementById('masteryPercent').textContent = Math.round((mastered.length / allSounds.length) * 100) + '%';
+
+            // Render grids
+            ['set1Grid', 'set2Grid', 'set3Grid'].forEach((gridId, idx) => {
+                const grid = document.getElementById(gridId);
+                grid.innerHTML = '';
+                sets[idx].sounds.forEach(sound => {
+                    const div = document.createElement('div');
+                    div.className = 'sound-item ' + getMasteryStatus(sound);
+                    
+                    // Special handling for tious/cious
+                    if (sound === 'tious/cious') {
+                        div.innerHTML = '<div style="font-size: 80%; line-height: 1.2; text-align: center;">tious<br>cious</div>';
+                        div.style.display = 'flex';
+                        div.style.alignItems = 'center';
+                        div.style.justifyContent = 'center';
+                        div.style.padding = '10px';
+                    } else {
+                        div.textContent = sound;
+                    }
+                    
+                    div.onclick = () => cycleStatus(sound, div);
+                    
+                    const status = document.createElement('div');
+                    status.className = 'sound-status';
+                    status.textContent = getMasteryStatus(sound) === 'mastered' ? '✓' : getMasteryStatus(sound) === 'needs-practice' ? '✗' : '●';
+                    div.appendChild(status);
+                    
+                    grid.appendChild(div);
+                });
+            });
+        }
+
+        function cycleStatus(sound, element) {
+            const current = getMasteryStatus(sound);
+            const next = current === 'unknown' ? 'needs-practice' : current === 'needs-practice' ? 'mastered' : 'unknown';
+            setMasteryStatus(sound, next);
+            updateDashboard();
+        }
+
+        function exportData() {
+            const studentName = getStudentName();
+            let csv = `Student: ${studentName}\\nDate: ${new Date().toLocaleDateString()}\\n\\nSound,Status\\n`;
+            sets.forEach(set => {
+                set.sounds.forEach(sound => {
+                    csv += `${sound},${getMasteryStatus(sound)}\\n`;
+                });
+            });
+            
+            const blob = new Blob([csv], { type: 'text/csv' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `speed-sounds-progress-${studentName}-${new Date().toISOString().split('T')[0]}.csv`;
+            a.click();
+            URL.revokeObjectURL(url);
+        }
+
+        // ======================
+        // MASTER RESET FUNCTION
+        // ======================
+        function masterReset() {
+            const confirmed = confirm(
+                '⚠️ WARNING: Master Reset\\n\\n' +
+                'This will permanently delete ALL student progress data including:\\n' +
+                '• All mastery status for every sound\\n' +
+                '• Student name\\n' +
+                '• All progress tracking\\n\\n' +
+                'This action CANNOT be undone.\\n\\n' +
+                'Are you absolutely sure you want to continue?'
+            );
+            
+            if (confirmed) {
+                // Clear all localStorage data
+                localStorage.removeItem(STORAGE_KEY);
+                localStorage.removeItem(STUDENT_NAME_KEY);
+                
+                // Reset in-memory data
+                masteryData = {};
+                sets.forEach(set => {
+                    set.sounds.forEach(sound => {
+                        masteryData[sound] = 'unknown';
+                    });
+                });
+                
+                // Reset student name input
+                document.getElementById('mainStudentName').value = '';
+                
+                // Update UI immediately
+                updateProgress();
+                
+                // Update dashboard if open
+                if (document.getElementById('teacherDashboard').classList.contains('active')) {
+                    updateDashboard();
+                }
+                
+                // Show confirmation
+                alert('✅ All data has been reset to zero.\\n\\n' +
+                      '• Total Sounds: 62\\n' +
+                      '• Mastered: 0\\n' + 
+                      '• Needs Practice: 0\\n' +
+                      '• Mastery Rate: 0%');
+            }
+        }
+        async function generatePDFReport() {
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF();
+            
+            const studentName = getStudentName();
+            const date = new Date().toLocaleDateString();
+            const pageWidth = doc.internal.pageSize.getWidth();
+            const pageHeight = doc.internal.pageSize.getHeight();
+            
+            // Set up colors and fonts
+            const primaryColor = [0, 122, 255]; // Blue
+            const successColor = [52, 199, 89]; // Green
+            const warningColor = [255, 149, 0]; // Orange
+            const grayColor = [142, 142, 147]; // Gray
+            
+            // Header with logo-like design
+            doc.setFillColor(245, 245, 247); // Light gray background
+            doc.rect(0, 0, pageWidth, 40, 'F');
+            
+            // Title with styling
+            doc.setFont('helvetica', 'bold');
+            doc.setFontSize(24);
+            doc.setTextColor(primaryColor[0], primaryColor[1], primaryColor[2]);
+            doc.text('Speed Sounds Mastery', pageWidth/2, 20, { align: 'center' });
+            
+            doc.setFontSize(14);
+            doc.setTextColor(0, 0, 0);
+            doc.text('Phonics Assessment Report', pageWidth/2, 32, { align: 'center' });
+            
+            // Decorative line
+            doc.setDrawColor(primaryColor[0], primaryColor[1], primaryColor[2]);
+            doc.setLineWidth(1);
+            doc.line(20, 45, pageWidth - 20, 45);
+            
+            // Student Information Box
+            doc.setFillColor(255, 255, 255);
+            doc.setDrawColor(200, 200, 200);
+            doc.setLineWidth(0.5);
+            doc.roundedRect(20, 55, pageWidth - 40, 35, 3, 3, 'FD');
+            
+            doc.setFont('helvetica', 'bold');
+            doc.setFontSize(12);
+            doc.setTextColor(0, 0, 0);
+            doc.text('Student Information', 25, 68);
+            
+            doc.setFont('helvetica', 'normal');
+            doc.setFontSize(11);
+            doc.text(`Name: ${studentName}`, 25, 78);
+            doc.text(`Assessment Date: ${date}`, 25, 85);
+            doc.text('Program: Read Write Inc. Speed Sounds', pageWidth - 25, 78, { align: 'right' });
+            
+            // Progress Summary with visual indicators
+            doc.setFont('helvetica', 'bold');
+            doc.setFontSize(14);
+            doc.setTextColor(0, 0, 0);
+            doc.text('Progress Summary', 20, 105);
+            
+            // Progress summary
+            const allSounds = sets.flatMap(set => set.sounds);
+            const mastered = allSounds.filter(s => getMasteryStatus(s) === 'mastered').length;
+            const needsPractice = allSounds.filter(s => getMasteryStatus(s) === 'needs-practice').length;
+            const assessed = mastered + needsPractice;
+            const masteryPercent = assessed > 0 ? Math.round((mastered / assessed) * 100) : 0;
+            
+            // Progress bar background
+            doc.setFillColor(230, 230, 230);
+            doc.roundedRect(20, 115, pageWidth - 40, 8, 4, 4, 'F');
+            
+            // Progress bar fill
+            const progressWidth = ((pageWidth - 40) * masteryPercent) / 100;
+            doc.setFillColor(successColor[0], successColor[1], successColor[2]);
+            doc.roundedRect(20, 115, progressWidth, 8, 4, 4, 'F');
+            
+            // Progress text
+            doc.setFont('helvetica', 'bold');
+            doc.setFontSize(12);
+            doc.setTextColor(0, 0, 0);
+            doc.text(`${masteryPercent}% Mastery`, pageWidth/2, 112, { align: 'center' });
+            
+            // Stats grid
+            const stats = [
+                { label: 'Assessed', value: assessed, color: [0, 0, 0] },
+                { label: 'Mastered', value: mastered, color: successColor },
+                { label: 'Practice', value: needsPractice, color: warningColor },
+                { label: 'Success Rate', value: masteryPercent + '%', color: successColor }
+            ];
+            
+            let statX = 20;
+            stats.forEach(stat => {
+                // Stat box
+                doc.setFillColor(248, 248, 248);
+                doc.roundedRect(statX, 135, 35, 25, 2, 2, 'F');
+                
+                // Value
+                doc.setFont('helvetica', 'bold');
+                doc.setFontSize(14);
+                doc.setTextColor(stat.color[0], stat.color[1], stat.color[2]);
+                doc.text(stat.value.toString(), statX + 17.5, 145, { align: 'center' });
+                
+                // Label
+                doc.setFont('helvetica', 'normal');
+                doc.setFontSize(8);
+                doc.setTextColor(100, 100, 100);
+                doc.text(stat.label, statX + 17.5, 152, { align: 'center' });
+                
+                statX += 40;
+            });
+            
+            // Detailed Results Section
+            let yPos = 175;
+            
+            doc.setFont('helvetica', 'bold');
+            doc.setFontSize(14);
+            doc.setTextColor(0, 0, 0);
+            doc.text('Detailed Assessment Results', 20, yPos);
+            yPos += 10;
+            
+            sets.forEach((set, setIndex) => {
+                if (yPos > 240) {
+                    // Add new page
+                    doc.addPage();
+                    yPos = 30;
+                    
+                    // Repeat header on new page
+                    doc.setFillColor(245, 245, 247);
+                    doc.rect(0, 0, pageWidth, 25, 'F');
+                    doc.setFont('helvetica', 'bold');
+                    doc.setFontSize(14);
+                    doc.setTextColor(primaryColor[0], primaryColor[1], primaryColor[2]);
+                    doc.text('Speed Sounds Mastery - Continued', pageWidth/2, 15, { align: 'center' });
+                    doc.setDrawColor(primaryColor[0], primaryColor[1], primaryColor[2]);
+                    doc.line(20, 30, pageWidth - 20, 30);
+                    yPos = 45;
+                }
+                
+                // Set header with colored background
+                doc.setFillColor(240, 248, 255); // Light blue background
+                doc.roundedRect(15, yPos - 5, pageWidth - 30, 12, 2, 2, 'F');
+                
+                doc.setFont('helvetica', 'bold');
+                doc.setFontSize(12);
+                doc.setTextColor(primaryColor[0], primaryColor[1], primaryColor[2]);
+                doc.text(`${set.name}`, 20, yPos + 2);
+                yPos += 15;
+                
+                doc.setFont('helvetica', 'normal');
+                doc.setFontSize(9);
+                
+                // Display sounds in tile grid format like dashboard
+                const sounds = set.sounds;
+                let tileIndex = 0;
+                const tilesPerRow = 8;
+                const tileSize = 15; // Size of each tile
+                const tileSpacing = 2; // Space between tiles
+                const startX = 20;
+                let currentY = yPos + 15;
+                
+                while (tileIndex < sounds.length) {
+                    let currentX = startX;
+                    
+                    for (let col = 0; col < tilesPerRow && tileIndex < sounds.length; col++) {
+                        const sound = sounds[tileIndex];
+                        const status = getMasteryStatus(sound);
+                        
+                        // Skip unknown sounds (only show assessed)
+                        if (status === 'unknown') {
+                            tileIndex++;
+                            continue;
+                        }
+                        
+                        // Determine tile color
+                        let bgColor;
+                        if (status === 'mastered') {
+                            bgColor = successColor;
+                        } else if (status === 'needs-practice') {
+                            bgColor = warningColor;
+                        }
+                        
+                        // Draw tile background
+                        doc.setFillColor(bgColor[0], bgColor[1], bgColor[2]);
+                        doc.roundedRect(currentX, currentY, tileSize, tileSize, 2, 2, 'F');
+                        
+                        // Draw tile border
+                        doc.setDrawColor(255, 255, 255);
+                        doc.setLineWidth(0.5);
+                        doc.roundedRect(currentX, currentY, tileSize, tileSize, 2, 2, 'S');
+                        
+                        // Draw sound text
+                        doc.setFont('helvetica', 'bold');
+                        doc.setFontSize(10);
+                        doc.setTextColor(255, 255, 255); // White text on colored background
+                        doc.text(sound, currentX + tileSize/2, currentY + tileSize/2 + 1, { align: 'center' });
+                        
+                        // Draw status symbol in bottom-right corner
+                        doc.setFontSize(8);
+                        const statusSymbol = status === 'mastered' ? '✓' : '✗';
+                        doc.text(statusSymbol, currentX + tileSize - 2, currentY + tileSize - 2);
+                        
+                        currentX += tileSize + tileSpacing;
+                        tileIndex++;
+                    }
+                    
+                    currentY += tileSize + tileSpacing;
+                    
+                    // Check if we need a new page
+                    if (currentY > 250) {
+                        doc.addPage();
+                        currentY = 30;
+                        
+                        // Repeat header on new page
+                        doc.setFillColor(245, 245, 247);
+                        doc.rect(0, 0, pageWidth, 25, 'F');
+                        doc.setFont('helvetica', 'bold');
+                        doc.setFontSize(14);
+                        doc.setTextColor(primaryColor[0], primaryColor[1], primaryColor[2]);
+                        doc.text('Speed Sounds Mastery - Continued', pageWidth/2, 15, { align: 'center' });
+                        doc.setDrawColor(primaryColor[0], primaryColor[1], primaryColor[2]);
+                        doc.line(20, 30, pageWidth - 20, 30);
+                        currentY = 45;
+                    }
+                }
+                
+                // Update yPos for next section (after tiles)
+                yPos = currentY + 10;
+            });
+            
+            // Footer with legend and generation info
+            if (yPos > 220) {
+                doc.addPage();
+                yPos = 30;
+            }
+            
+            // Legend box
+            doc.setFillColor(248, 248, 248);
+            doc.roundedRect(20, yPos, pageWidth - 40, 30, 3, 3, 'F');
+            
+            doc.setFont('helvetica', 'bold');
+            doc.setFontSize(11);
+            doc.setTextColor(0, 0, 0);
+            doc.text('Assessment Legend', 25, yPos + 8);
+            
+            doc.setFont('helvetica', 'normal');
+            doc.setFontSize(9);
+            
+            // Legend items with colored bullets
+            const legendItems = [
+                { symbol: '✓', text: 'Mastered', color: successColor },
+                { symbol: '✗', text: 'Needs Practice', color: warningColor }
+            ];
+            
+            legendItems.forEach((item, index) => {
+                const itemY = yPos + 18 + (index * 8);
+                
+                // Colored bullet
+                doc.setFillColor(item.color[0], item.color[1], item.color[2]);
+                doc.circle(30, itemY - 2, 2, 'F');
+                
+                // Text
+                doc.setTextColor(0, 0, 0);
+                doc.text(`${item.symbol} ${item.text}`, 40, itemY);
+            });
+            
+            // Footer text
+            doc.setFont('helvetica', 'italic');
+            doc.setFontSize(8);
+            doc.setTextColor(100, 100, 100);
+            doc.text(`Report generated on ${new Date().toLocaleString()}`, pageWidth/2, pageHeight - 15, { align: 'center' });
+            doc.text('Speed Sounds Mastery System', pageWidth/2, pageHeight - 8, { align: 'center' });
+            
+            // Save the PDF
+            doc.save(`speed-sounds-report-${studentName}-${new Date().toISOString().split('T')[0]}.pdf`);
+        }
+
+        // ======================
+        // ENHANCED UPDATE CARD
+        // ======================
+        const originalUpdateCard = updateCard;
+        updateCard = function() {
+            originalUpdateCard();
+            // TTS removed - no audio playback
+        };
+
+        // ======================
+        // MODE SYSTEM
+        // ======================
+        function setMode(newMode) {
+            currentMode = newMode;
+            
+            // Update button styles
+            document.getElementById('sequentialMode').classList.toggle('active', newMode === 'sequential');
+            document.getElementById('practiceMode').classList.toggle('active', newMode === 'practice');
+            document.getElementById('teacherMode').classList.toggle('active', newMode === 'teacher');
+            
+            // Hide/show mastery buttons based on mode
+            const masteryButtons = document.querySelector('.mastery-indicators');
+            if (newMode === 'teacher') {
+                masteryButtons.style.display = 'none';
+            } else {
+                masteryButtons.style.display = 'flex';
+            }
+            
+            // Reset to beginning when changing modes
+            resetDeckToStart();
+        }
+
+        function nextCardInPracticeMode() {
+            // Smart practice: weighted randomization based on mastery
+            const allSounds = sets.flatMap(set => set.sounds);
+            const weights = allSounds.map(sound => {
+                const status = getMasteryStatus(sound);
+                if (status === 'needs-practice') return 5;
+                if (status === 'unknown') return 3;
+                return 1; // mastered gets low weight for retention
+            });
+
+            const totalWeight = weights.reduce((a, b) => a + b, 0);
+            let random = Math.random() * totalWeight;
+
+            let selectedSound;
+            for (let i = 0; i < allSounds.length; i++) {
+                random -= weights[i];
+                if (random <= 0) {
+                    selectedSound = allSounds[i];
+                    break;
+                }
+            }
+
+            // Find which set and index this sound is in
+            for (let setIndex = 0; setIndex < sets.length; setIndex++) {
+                const soundIndex = sets[setIndex].sounds.indexOf(selectedSound);
+                if (soundIndex !== -1) {
+                    currentSetIndex = setIndex;
+                    currentSoundIndex = soundIndex;
+                    showingSetTitle = false;
+                    cardHistory.push({ setIndex: currentSetIndex, soundIndex: currentSoundIndex, isSetTitle: showingSetTitle });
+                    createNewCard();
+                    updateCard();
+                    return;
+                }
+            }
+        }
+
+        // ======================
+        // INIT & EVENT LISTENERS
+        // ======================
+        document.addEventListener('DOMContentLoaded', () => {
+            loadMasteryData();
+            updateProgress();
+            loadStudentName();
+            loadContrastSetting();
+
+            // Dashboard
+            document.getElementById('resetBtn').onclick = openDashboard;
+            document.getElementById('closeDashboard').onclick = closeDashboard;
+            document.getElementById('exportProgress').onclick = exportData;
+            document.getElementById('printReport').onclick = generatePDFReport;
+            document.getElementById('masterReset').onclick = masterReset;
+
+            // Student name - save on input change
+            document.getElementById('mainStudentName').addEventListener('input', saveStudentName);
+            
+            // Contrast toggle
+            document.getElementById('contrastToggle').addEventListener('click', (e) => {
+                const toggle = e.target.closest('.contrast-toggle');
+                const isCurrentlyActive = toggle.classList.contains('active');
+                updateContrast(!isCurrentlyActive);
+            });
+
+            // Mastery buttons
+            document.getElementById('knowBtn').onclick = () => {
+                if (!showingSetTitle) {
+                    const sound = sets[currentSetIndex].sounds[currentSoundIndex];
+                    setMasteryStatus(sound, 'mastered');
+                    nextCard();
+                }
+            };
+
+            document.getElementById('practiceBtn').onclick = () => {
+                if (!showingSetTitle) {
+                    const sound = sets[currentSetIndex].sounds[currentSoundIndex];
+                    setMasteryStatus(sound, 'needs-practice');
+                    nextCard();
+                }
+            };
+
+            // Mode buttons
+            document.getElementById('sequentialMode').onclick = () => setMode('sequential');
+            document.getElementById('practiceMode').onclick = () => setMode('practice');
+            document.getElementById('teacherMode').onclick = () => setMode('teacher');
+
+            // Keyboard shortcuts
+            document.addEventListener('keydown', (e) => {
+                if (e.key === ' ') {
+                    e.preventDefault();
+                    nextCard();
+                } else if (e.key === 'v' || e.key === '✓') {
+                    document.getElementById('knowBtn').click();
+                } else if (e.key === 'x' || e.key === '✗') {
+                    document.getElementById('practiceBtn').click();
+                }
+            });
+        });
+
+        // Initialize Speed Sound Deck on load
+        initializeSpeedSoundDeck();
+    </script>
+</body>
+</html>
