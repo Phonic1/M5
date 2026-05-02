@@ -5,882 +5,1203 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>M5 Sound Matching Board</title>
     <style>
+        :root {
+            --brand:   #007aff;
+            --good:    #34c759;
+            --bad:     #ff3b30;
+            --warn:    #ff9500;
+            --purple:  #af52de;
+            --ink:     #1d1d1f;
+            --muted:   #6b7280;
+            --line:    #d2d2d7;
+            --bg:      #ffffff;
+            --panel-bg:#f5f5f7;
+            --shadow:  0 2px 8px rgba(0,0,0,.10);
+            --radius:  12px;
+            --panel-w: 22%;
+            --panel-min: 210px;
+        }
+
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
         body {
             font-family: 'Sassoon Primary', 'Comic Sans MS', Arial, sans-serif;
-            margin: 0;
-            background-color: #ffffff;
+            background: var(--bg);
             height: 100vh;
             overflow: hidden;
             touch-action: manipulation;
+            color: var(--ink);
         }
 
-        .watermark {
-            position: fixed;
-            bottom: 10px;
-            right: 10px;
-            font-size: 12px;
-            color: #6b7280;
-            opacity: 0.7;
-            font-family: 'Sassoon Primary', 'Comic Sans MS', Arial, sans-serif;
-            pointer-events: none;
-            z-index: 1000;
-        }
-
-        /* M5 Sound Matching Board Styles (adapted from Blending Board) */
-        .sound-matching-board { /* Renamed class */
+        /* ── Layout ─────────────────────────────────── */
+        .app {
             display: flex;
             height: 100vh;
-        }
-
-        .teacher-view {
-            width: 20%;
-            padding: 15px;
-            background-color: #ffffff;
-            border-right: 1px solid #d2d2d7;
-            max-height: 100vh;
-            overflow-y: auto;
-        }
-
-        .student-view {
-            width: 80%;
-            padding: 20px;
-            background-color: #ffffff;
-            overflow-x: auto;
-            box-sizing: border-box;
-        }
-
-        .form-group {
-            margin: 8px 0;
-            font-size: 14px;
-        }
-
-        .form-group input {
-            width: calc(100% - 18px);
-            padding: 8px;
-            border: 1px solid #c7c7cc;
-            border-radius: 8px;
-            font-size: 14px;
-            font-family: 'Sassoon Primary', 'Comic Sans MS', Arial, sans-serif;
-            box-sizing: border-box;
-            display: block;
-            margin-top: 4px;
-        }
-
-        .form-group label {
-            font-size: 14px;
-            color: #1d1d1f;
-            display: block;
-        }
-
-        .support-dropdown {
             position: relative;
-            width: 100%;
         }
 
-        .support-select {
-            width: 100%;
-            padding: 8px;
-            border: 1px solid #c7c7cc;
-            border-radius: 8px;
-            font-size: 14px;
-            font-family: 'Sassoon Primary', 'Comic Sans MS', Arial, sans-serif;
-            background-color: #ffffff;
-            appearance: none;
-            cursor: pointer;
-            box-sizing: border-box;
+        /* ── Teacher Panel ───────────────────────────── */
+        .teacher-panel {
+            width: var(--panel-w);
+            min-width: var(--panel-min);
+            background: var(--panel-bg);
+            border-right: 1px solid var(--line);
+            padding: 14px 12px;
+            overflow-y: auto;
+            flex-shrink: 0;
+            transition: width .3s ease, min-width .3s ease, padding .3s ease, border .3s ease;
+            position: relative;
+            z-index: 2;
         }
 
-        .support-select:focus {
-            outline: none;
-            border-color: #007aff;
+        .app.panel-hidden .teacher-panel {
+            width: 0;
+            min-width: 0;
+            padding-left: 0;
+            padding-right: 0;
+            overflow: hidden;
+            border-right: none;
         }
 
-        .support-dropdown::after {
-            content: '▼';
+        /* Panel toggle tab */
+        .panel-toggle {
             position: absolute;
-            right: 10px;
+            left: var(--panel-w);
             top: 50%;
             transform: translateY(-50%);
-            pointer-events: none;
-            color: #1d1d1f;
-        }
-
-        .support-select option {
-            padding: 10px;
-            font-family: 'Sassoon Primary', 'Comic Sans MS', Arial, sans-serif;
-        }
-
-        @keyframes dropdownFade {
-            0% { opacity: 0; transform: translateY(-10px); }
-            100% { opacity: 1; transform: translateY(0); }
-        }
-
-        .support-select:focus + .support-options {
-            animation: dropdownFade 0.3s ease-in-out;
-        }
-
-        .letter-tiles { /* Renamed to sound-tiles in context, but class name kept for CSS consistency */
-            min-height: 120px;
-            padding: 15px;
-            background-color: #ffffff;
-            border-radius: 12px;
-            text-align: center;
+            z-index: 20;
+            width: 22px;
+            height: 52px;
+            background: var(--muted);
+            color: white;
+            border: none;
+            border-radius: 0 8px 8px 0;
+            cursor: pointer;
+            font-size: 15px;
             display: flex;
-            justify-content: center;
             align-items: center;
-            flex-wrap: wrap;
-            gap: 10px;
-            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-        }
-
-        .letter-tile { /* Represents a sound tile */
-            display: flex;
             justify-content: center;
-            align-items: center;
-            width: 160px; /* Fixed width, may need adjustment for very long sounds */
-            height: 160px;
-            background: #ffffff;
-            color: #000000;
-            margin: 5px;
-            font-size: 60px; /* Slightly reduced for potentially longer sounds */
-            font-family: 'Sassoon Primary', 'Comic Sans MS', Arial, sans-serif;
-            cursor: move;
-            user-select: none;
-            border: 1px solid #d2d2d7;
-            border-radius: 12px;
-            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            transition: left .3s ease, background .2s;
             flex-shrink: 0;
-            touch-action: none;
-            pointer-events: auto;
-            overflow: hidden; /* Prevent text overflow */
-            text-overflow: ellipsis; /* Add ellipsis if text is too long */
-            white-space: nowrap; /* Keep sound on one line */
-            padding: 5px; /* Add some padding */
-            box-sizing: border-box;
         }
 
-        .letter-tile.selected {
-            border: 2px solid #007aff;
-            transform: scale(1.05);
+        .panel-toggle:hover { background: #4b5563; }
+
+        .app.panel-hidden .panel-toggle {
+            left: 0;
+            background: var(--brand);
+            border-radius: 0 8px 8px 0;
         }
 
-        .drop-zone {
-            width: auto; /* Will be set by JS */
-            min-width: 200px; /* Enough for one tile */
-            height: 200px; /* Enough for one tile */
-            border: 2px dashed #c7c7cc;
-            margin: 50px auto;
-            padding: 20px;
-            background-color: #ffffff;
-            border-radius: 12px;
-            text-align: center;
-            display: flex;
-            justify-content: center; /* Center the single tile */
-            align-items: center;
-            flex-wrap: nowrap;
-            gap: 10px;
-            overflow-x: auto;
-            touch-action: none;
-            font-family: 'Sassoon Primary', 'Comic Sans MS', Arial, sans-serif;
-            color: #6b7280;
-            font-size: 20px;
+        /* ── Form ────────────────────────────────────── */
+        .fg { margin-bottom: 10px; }
+
+        .fg label {
+            display: block;
+            font-size: 11px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: .04em;
+            color: var(--muted);
+            margin-bottom: 3px;
         }
 
-        .drop-zone.correct {
-            background-color: #e6ffed !important;
-            border-color: #34c759 !important;
-        }
-
-        .drop-zone.incorrect {
-            background-color: #ffebee !important;
-            border-color: #ff3b30 !important;
-        }
-
-        .smb-button { /* Renamed class */
+        .fg input, .fg select {
             width: 100%;
-            padding: 12px;
-            margin: 5px 0;
+            padding: 7px 9px;
+            border: 1px solid var(--line);
+            border-radius: 8px;
+            font-size: 13px;
+            font-family: 'Sassoon Primary', 'Comic Sans MS', Arial, sans-serif;
+            background: var(--bg);
+            color: var(--ink);
+            appearance: none;
+        }
+
+        .fg input:focus, .fg select:focus {
+            outline: none;
+            border-color: var(--brand);
+            box-shadow: 0 0 0 3px rgba(0,122,255,.15);
+        }
+
+        .divider { border: none; border-top: 1px solid var(--line); margin: 10px 0; }
+
+        /* ── Panel Buttons ───────────────────────────── */
+        .pb {
+            width: 100%;
+            padding: 10px 8px;
+            margin-bottom: 6px;
             cursor: pointer;
             border: none;
             border-radius: 8px;
             font-family: 'Sassoon Primary', 'Comic Sans MS', Arial, sans-serif;
-            font-size: 16px;
-            font-weight: 500;
-            transition: background-color 0.3s, transform 0.1s;
+            font-size: 13px;
+            font-weight: 700;
+            color: white;
+            transition: filter .15s, transform .1s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 5px;
         }
 
-        .smb-button:hover {
-            transform: translateY(-1px);
+        .pb:hover  { filter: brightness(88%); }
+        .pb:active { transform: scale(.97); }
+
+        .pb-generate { background: var(--brand); }
+        .pb-say      { background: #5856d6; }
+        .pb-reset    { background: var(--purple); }
+        .pb-report   { background: var(--warn); }
+        .pb-print    { background: #ff2d55; }
+        .pb-danger   { background: #dc3545; }
+        .pb-admin    { background: #17a2b8; }
+        .pb-clear    { background: var(--muted); }
+
+        .panel-section-title {
+            font-size: 11px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: .05em;
+            color: var(--muted);
+            margin-bottom: 6px;
+            margin-top: 4px;
         }
 
-        #generateBtnSMB { background-color: #007aff; color: white; }
-        #resetBtnSMB { background-color: #af52de; color: white; }
-        #correctBtnSMB { background-color: #34c759; color: white; }
-        #incorrectBtnSMB { background-color: #ff3b30; color: white; }
-        #reportBtnSMB { background-color: #ff9500; color: white; }
-        #printBtnSMB { background-color: #ff2d55; color: white; }
-        #resetSessionDataBtnSMB { background-color: #dc3545; color: white; }
-        #adminDownloadAllDataBtnSMB { background-color: #17a2b8; color: white; }
-        #homeBtnSMB { background-color: #6c757d; color: white; }
+        /* ── Student View ────────────────────────────── */
+        .student-view {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 16px 20px 20px;
+            overflow: hidden;
+            position: relative;
+        }
 
-        .modal { display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; background-color: rgba(0, 0, 0, 0.5); overflow-y: auto; }
-        .modal-content { background-color: #ffffff; margin: 5% auto; padding: 20px; border-radius: 12px; width: 80%; max-width: 800px; box-shadow: 0 4px 8px rgba(0,0,0,0.2); font-family: 'Sassoon Primary', 'Comic Sans MS', Arial, sans-serif; }
-        .close-btn { color: #6b7280; float: right; font-size: 28px; font-weight: bold; cursor: pointer; }
-        .close-btn:hover { color: #000000; }
-        .report-table { width: 100%; border-collapse: collapse; margin-top: 20px; font-family: 'Sassoon Primary', 'Comic Sans MS', Arial, sans-serif; }
-        .report-table th, .report-table td { border: 1px solid #d2d2d7; padding: 12px; text-align: left; }
-        .report-table th { background-color: #f5f5f7; font-weight: 600; position: sticky; top: 0; z-index: 1; }
-        .modal-content .report-table th { top: -20px; }
-        .report-table tr:nth-child(even) { background-color: #f5f5f7; }
-        .report-table tr:hover { background-color: #e9e9eb; }
-        .report-status-correct { color: #34c759; font-weight: bold; }
-        .report-status-incorrect { color: #ff3b30; font-weight: bold; }
-        .report-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
-        .report-controls { display: flex; gap: 10px; margin-top: 20px; }
-        .report-btn { padding: 8px 16px; border-radius: 8px; border: none; cursor: pointer; font-weight: 500; transition: background-color 0.3s; font-family: 'Sassoon Primary', 'Comic Sans MS', Arial, sans-serif; }
-        .export-csv-btn { background-color: #007aff; color: white; }
-        .print-report-btn { background-color: #6b7280; color: white; }
-        .copy-report-btn { background-color: #28a745; color: white; }
-        .no-data-message { text-align: center; padding: 40px 0; color: #6b7280; font-size: 18px; }
-        .formatted-date { white-space: nowrap; }
-        h1 { color: #000000; text-align: center; font-size: 48px; font-family: 'Sassoon Primary', 'Comic Sans MS', Arial, sans-serif; }
-        .student-view > h1 { margin-top: 0; margin-bottom: 20px; }
-        h2 { font-size: 18px; color: #1d1d1f; font-family: 'Sassoon Primary', 'Comic Sans MS', Arial, sans-serif; }
+        /* Stats bar */
+        .stats-bar {
+            position: absolute;
+            top: 14px;
+            right: 16px;
+            display: flex;
+            gap: 10px;
+        }
 
-        /* Responsive Styles */
-        @media (max-width: 1200px) { .drop-zone { min-width: 180px; height: 180px; } .letter-tile { width: 120px; height: 120px; font-size: 48px; } }
-        @media (max-width: 768px) { .teacher-view { width: 30%; } .student-view { width: 70%; } .drop-zone { min-width: 150px; height: 150px; } .letter-tile { width: 100px; height: 100px; font-size: 40px; } .modal-content { width: 90%; } }
-        @media (max-width: 480px) { .sound-matching-board { flex-direction: column; } .teacher-view { width: 100%; max-height: 50vh; border-right: none; border-bottom: 1px solid #d2d2d7; } .student-view { width: 100%; height: 50vh; } .student-view > h1 { font-size: 24px; } .drop-zone { min-width: 120px; height: 120px; margin: 20px auto; } .letter-tile { width: 80px; height: 80px; font-size: 32px; } .modal-content { width: 95%; margin: 2% auto; } }
-        @media print { body { overflow: visible !important; height: auto !important; } body * { visibility: hidden; } #reportModal, #reportModal .modal-content, #reportModal .modal-content * { visibility: visible; } #reportModal { position: absolute !important; left: 0 !important; top: 0 !important; width: 100% !important; height: auto !important; overflow: visible !important; background-color: white !important; z-index: 9999 !important; } .modal-content { position: static !important; width: 100% !important; max-width: none !important; margin: 0 !important; padding: 10px !important; border: none !important; box-shadow: none !important; max-height: none !important; overflow-y: visible !important; } .report-header { margin-bottom: 15px; } .report-header h2 { font-size: 16pt; text-align: left; } .report-table { width: 100%; font-size: 9pt; border-collapse: collapse; margin-top: 0; } .report-table th, .report-table td { border: 1px solid #666 !important; padding: 4px 6px !important; word-break: break-word; } .report-table th { background-color: #e0e0e0 !important; position: static !important; font-weight: bold; -webkit-print-color-adjust: exact; color-adjust: exact; } .report-table tr:nth-child(even) { background-color: #f0f0f0 !important; -webkit-print-color-adjust: exact; color-adjust: exact; } .report-status-correct, .report-status-incorrect { font-weight: normal; -webkit-print-color-adjust: exact; color-adjust: exact; } .close-btn, .report-controls, .watermark, .teacher-view, .student-view > h1, .letter-tiles, .drop-zone, .smb-button, .form-group button#homeBtnSMB, .form-group button#resetSessionDataBtnSMB, .form-group button#adminDownloadAllDataBtnSMB { display: none !important; } }
-        .hidden { display: none !important; }
+        .stat-chip {
+            padding: 5px 14px;
+            border-radius: 20px;
+            font-size: 13px;
+            font-weight: 700;
+            border: 1.5px solid var(--line);
+            background: var(--panel-bg);
+            color: var(--muted);
+        }
+
+        .stat-chip.chip-total   { border-color: var(--brand); color: var(--brand); }
+        .stat-chip.chip-correct { border-color: var(--good);  color: var(--good);  }
+
+        /* Home button */
+        .home-btn {
+            position: absolute;
+            top: 14px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: none;
+            border: none;
+            cursor: pointer;
+            font-size: 13px;
+            color: var(--muted);
+            font-family: 'Sassoon Primary', 'Comic Sans MS', Arial, sans-serif;
+            text-decoration: underline;
+            padding: 4px 8px;
+        }
+
+        .home-btn:hover { color: var(--ink); }
+
+        /* Prompt */
+        .prompt {
+            font-size: 22px;
+            font-weight: 600;
+            color: var(--muted);
+            text-align: center;
+            margin-bottom: 28px;
+            min-height: 30px;
+            transition: color .3s;
+        }
+
+        /* ── Tiles ───────────────────────────────────── */
+        .tiles-area {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 14px;
+            padding: 10px 16px;
+            min-height: 160px;
+            width: 100%;
+            max-width: 900px;
+        }
+
+        .sound-tile {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            width: 150px;
+            height: 150px;
+            background: var(--bg);
+            color: var(--ink);
+            font-size: 58px;
+            font-family: 'Sassoon Primary', 'Comic Sans MS', Arial, sans-serif;
+            cursor: grab;
+            user-select: none;
+            border: 2px solid var(--line);
+            border-radius: var(--radius);
+            box-shadow: var(--shadow);
+            flex-shrink: 0;
+            touch-action: none;
+            transition: transform .15s, box-shadow .15s, border-color .15s;
+            padding: 8px;
+            overflow: hidden;
+            white-space: nowrap;
+        }
+
+        .sound-tile:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 8px 20px rgba(0,0,0,.14);
+            border-color: var(--brand);
+        }
+
+        .sound-tile.tile-selected {
+            border: 3px solid var(--brand);
+            transform: scale(1.07);
+            box-shadow: 0 6px 22px rgba(0,122,255,.3);
+        }
+
+        .sound-tile.tile-dragging {
+            opacity: .45;
+            transform: scale(.94);
+        }
+
+        /* ── Drop Zone ───────────────────────────────── */
+        .drop-wrapper {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 10px;
+            margin-top: 18px;
+        }
+
+        .drop-label {
+            font-size: 17px;
+            color: var(--muted);
+            font-weight: 600;
+        }
+
+        .drop-zone {
+            width: 172px;
+            height: 172px;
+            border: 3px dashed var(--line);
+            border-radius: var(--radius);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background: var(--bg);
+            touch-action: none;
+            transition: border-color .2s, background .2s, transform .2s;
+            position: relative;
+        }
+
+        .drop-zone .drop-placeholder {
+            font-size: 48px;
+            color: var(--line);
+            font-weight: 700;
+            pointer-events: none;
+        }
+
+        .drop-zone.dz-hover {
+            border-color: var(--brand);
+            background: #f0f7ff;
+        }
+
+        .drop-zone.dz-correct {
+            border-color: var(--good);
+            background: #e6ffed;
+            animation: pulse-correct .45s ease;
+        }
+
+        .drop-zone.dz-incorrect {
+            border-color: var(--bad);
+            background: #ffebee;
+            animation: shake .45s ease;
+        }
+
+        /* Tile sitting in drop zone */
+        .drop-zone .sound-tile {
+            cursor: default;
+            border-color: transparent;
+            box-shadow: none;
+            width: 140px;
+            height: 140px;
+            pointer-events: none;
+        }
+
+        .drop-zone .sound-tile:hover {
+            transform: none;
+            box-shadow: none;
+            border-color: transparent;
+        }
+
+        @keyframes pulse-correct {
+            0%   { transform: scale(1); }
+            45%  { transform: scale(1.07); }
+            100% { transform: scale(1); }
+        }
+
+        @keyframes shake {
+            0%,100% { transform: translateX(0); }
+            18%     { transform: translateX(-9px); }
+            36%     { transform: translateX(9px); }
+            54%     { transform: translateX(-7px); }
+            72%     { transform: translateX(7px); }
+        }
+
+        /* ── Modal ───────────────────────────────────── */
+        .modal {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,.5);
+            z-index: 1000;
+            overflow-y: auto;
+        }
+
+        .modal-box {
+            background: var(--bg);
+            margin: 4% auto;
+            padding: 24px;
+            border-radius: 16px;
+            width: 88%;
+            max-width: 840px;
+            box-shadow: 0 10px 36px rgba(0,0,0,.22);
+        }
+
+        .modal-head {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 16px;
+        }
+
+        .modal-head h2 { font-size: 18px; color: var(--ink); }
+
+        .modal-close {
+            background: none;
+            border: none;
+            font-size: 30px;
+            cursor: pointer;
+            color: var(--muted);
+            line-height: 1;
+            padding: 2px 6px;
+        }
+
+        .modal-close:hover { color: var(--ink); }
+
+        .report-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 10px;
+            font-size: 13px;
+        }
+
+        .report-table th, .report-table td {
+            border: 1px solid var(--line);
+            padding: 9px 11px;
+            text-align: left;
+        }
+
+        .report-table th {
+            background: var(--panel-bg);
+            font-weight: 700;
+            position: sticky;
+            top: 0;
+        }
+
+        .report-table tr:nth-child(even) { background: var(--panel-bg); }
+        .report-table tr:hover { background: #e8e8ea; }
+
+        .ok  { color: var(--good); font-weight: 700; }
+        .err { color: var(--bad);  font-weight: 700; }
+
+        .no-data { text-align: center; padding: 36px; color: var(--muted); font-size: 17px; }
+        .ws-nowrap { white-space: nowrap; }
+
+        .modal-actions {
+            display: flex;
+            gap: 10px;
+            margin-top: 16px;
+            flex-wrap: wrap;
+        }
+
+        .mb {
+            padding: 9px 16px;
+            border-radius: 8px;
+            border: none;
+            cursor: pointer;
+            font-weight: 700;
+            font-size: 13px;
+            color: white;
+            font-family: 'Sassoon Primary', 'Comic Sans MS', Arial, sans-serif;
+            transition: filter .15s;
+        }
+
+        .mb:hover { filter: brightness(88%); }
+        .mb-csv   { background: var(--brand); }
+        .mb-copy  { background: #28a745; }
+        .mb-prnt  { background: var(--muted); }
+
+        /* ── Watermark ───────────────────────────────── */
+        .watermark {
+            position: fixed;
+            bottom: 10px;
+            right: 12px;
+            font-size: 11px;
+            color: var(--muted);
+            opacity: .6;
+            pointer-events: none;
+            z-index: 999;
+        }
+
+        /* ── Responsive ──────────────────────────────── */
+        @media (max-width: 900px) {
+            .sound-tile { width: 120px; height: 120px; font-size: 46px; }
+            .drop-zone  { width: 142px; height: 142px; }
+        }
+
+        @media (max-width: 768px) {
+            :root { --panel-w: 32%; --panel-min: 180px; }
+            .sound-tile { width: 100px; height: 100px; font-size: 38px; }
+            .drop-zone  { width: 120px; height: 120px; }
+        }
+
+        @media (max-width: 480px) {
+            .app { flex-direction: column; }
+            .teacher-panel {
+                width: 100% !important;
+                min-width: 0 !important;
+                max-height: 44vh;
+                border-right: none;
+                border-bottom: 1px solid var(--line);
+                transition: max-height .3s ease, padding .3s ease;
+            }
+            .app.panel-hidden .teacher-panel { max-height: 0; padding: 0; overflow: hidden; border-bottom: none; }
+            .student-view { height: 56vh; justify-content: flex-start; padding-top: 44px; }
+            .panel-toggle { display: none; }
+            .stats-bar { top: 8px; right: 8px; }
+            .sound-tile { width: 88px; height: 88px; font-size: 33px; }
+            .drop-zone  { width: 108px; height: 108px; }
+            .prompt     { font-size: 17px; margin-bottom: 14px; }
+        }
+
+        /* ── Print ───────────────────────────────────── */
+        @media print {
+            body { overflow: visible !important; height: auto !important; }
+            body * { visibility: hidden; }
+            #reportModal, #reportModal .modal-box, #reportModal .modal-box * { visibility: visible; }
+            #reportModal {
+                position: absolute !important;
+                inset: 0 !important;
+                overflow: visible !important;
+                background: white !important;
+                z-index: 9999 !important;
+            }
+            .modal-box {
+                position: static !important;
+                width: 100% !important;
+                max-width: none !important;
+                margin: 0 !important;
+                padding: 10px !important;
+                border: none !important;
+                box-shadow: none !important;
+            }
+            .report-table { font-size: 9pt; }
+            .report-table th { background: #e0e0e0 !important; -webkit-print-color-adjust: exact; color-adjust: exact; }
+            .report-table tr:nth-child(even) { background: #f0f0f0 !important; -webkit-print-color-adjust: exact; color-adjust: exact; }
+            .modal-close, .modal-actions { display: none !important; }
+        }
     </style>
 </head>
 <body>
-    <div id="soundMatchingBoard" class="sound-matching-board">
-        <div class="teacher-view">
-            <div class="form-group">
-                <label for="studentNameSMB">Student:</label>
-                <input type="text" id="studentNameSMB">
-            </div>
-            <div class="form-group">
-                <label for="adultNameSMB">Adult:</label>
-                <input type="text" id="adultNameSMB">
-            </div>
-            <div class="form-group">
-                <label for="testableSoundInputSMB">Testable Sound:</label>
-                <input type="text" id="testableSoundInputSMB">
-            </div>
-            <div class="form-group">
-                <label for="distractorSoundsInputSMB">Distractor Sounds (comma-separated):</label>
-                <input type="text" id="distractorSoundsInputSMB" placeholder="e.g., m, s, t">
-            </div>
-            <div class="form-group">
-                <label for="verbalSupportLevelSMB">Verbal Support Scale (1-5):</label>
-                <div class="support-dropdown">
-                    <select id="verbalSupportLevelSMB" class="support-select">
-                        <option value="5" title="Continuous and explicit verbal instructions, repeated modeling, and detailed prompting required.">5 - Full Verbal Support</option>
-                        <option value="4" title="Frequent, detailed verbal prompts and explicit modeling required.">4 - Significant Verbal Support</option>
-                        <option value="3" title="Regular verbal cues, reminders, or partial modeling needed.">3 - Moderate Verbal Support</option>
-                        <option value="2" title="Brief verbal prompts or minimal reminders needed occasionally.">2 - Minimal Verbal Support</option>
-                        <option value="1" selected title="No verbal support required; student independent.">1 - Independent (Verbal)</option>
-                    </select>
-                </div>
-            </div>
-            <div class="form-group">
-                <label for="visualSupportLevelSMB">Visual Support Scale (1-5):</label>
-                <div class="support-dropdown">
-                    <select id="visualSupportLevelSMB" class="support-select">
-                        <option value="5" title="Constant visual prompts (e.g., pointing, gesture, explicit visual aids, or repeated modeling) required.">5 - Full Visual Support</option>
-                        <option value="4" title="Frequent visual cues or consistent modeling necessary.">4 - Significant Visual Support</option>
-                        <option value="3" title="Occasional visual prompts (such as gestures, pointing, or visual aids) needed.">3 - Moderate Visual Support</option>
-                        <option value="2" title="Rare or brief visual prompts required; student largely independent visually.">2 - Minimal Visual Support</option>
-                        <option value="1" selected title="No visual support required; student independent.">1 - Independent (Visual)</option>
-                    </select>
-                </div>
-            </div>
-            <div class="form-group"><button id="generateBtnSMB" class="smb-button">Generate</button></div>
-            <div class="form-group"><button id="resetBtnSMB" class="smb-button">Reset Tiles</button></div>
-            <div class="form-group"><button id="correctBtnSMB" class="smb-button">Correct</button></div>
-            <div class="form-group"><button id="incorrectBtnSMB" class="smb-button">Incorrect</button></div>
-            <div class="form-group"><button id="reportBtnSMB" class="smb-button">View Report</button></div>
-            <div class="form-group"><button id="printBtnSMB" class="smb-button">Print</button></div>
-            <div class="form-group"><button id="resetSessionDataBtnSMB" class="smb-button">Reset Session Data</button></div>
-            <div class="form-group"><button id="adminDownloadAllDataBtnSMB" class="smb-button">Download All Stored Data (Admin)</button></div>
-            <div class="form-group"><button id="homeBtnSMB" class="smb-button">Clear Current Board</button></div>
+<div class="app" id="app">
+
+    <!-- ── Teacher Panel ── -->
+    <aside class="teacher-panel" id="teacherPanel">
+
+        <div class="fg">
+            <label for="studentName">Student</label>
+            <input type="text" id="studentName" placeholder="e.g. Jake" autocomplete="off">
         </div>
-        <div class="student-view">
-            <h1>M5 Sound Matching Board</h1>
-            <div class="letter-tiles" id="soundTilesSMB"></div> <!-- Renamed ID -->
-            <div class="drop-zone" id="dropZoneSMB">Drag the correct sound here!</div> <!-- Renamed ID -->
+        <div class="fg">
+            <label for="adultName">Adult</label>
+            <input type="text" id="adultName" placeholder="e.g. Mrs Smith" autocomplete="off">
+        </div>
+
+        <hr class="divider">
+        <div class="panel-section-title">Sound Setup</div>
+
+        <div class="fg">
+            <label for="presetSelect">Quick Preset</label>
+            <select id="presetSelect">
+                <option value="">— Custom —</option>
+                <optgroup label="Set 1 – Consonant Contrasts">
+                    <option value="b|d,p">b  vs  d, p</option>
+                    <option value="d|b,p">d  vs  b, p</option>
+                    <option value="m|n,ng">m  vs  n, ng</option>
+                    <option value="n|m,ng">n  vs  m, ng</option>
+                    <option value="f|v,th">f  vs  v, th</option>
+                    <option value="v|f,th">v  vs  f, th</option>
+                    <option value="sh|ch,s">sh  vs  ch, s</option>
+                    <option value="ch|sh,j">ch  vs  sh, j</option>
+                    <option value="th|s,sh">th  vs  s, sh</option>
+                    <option value="ng|nk,n">ng  vs  nk, n</option>
+                    <option value="nk|ng,k">nk  vs  ng, k</option>
+                </optgroup>
+                <optgroup label="Set 2 – Vowel Teams">
+                    <option value="ay|ai,a-e">ay  vs  ai, a-e</option>
+                    <option value="ee|ea,ie">ee  vs  ea, ie</option>
+                    <option value="igh|ie,i-e">igh  vs  ie, i-e</option>
+                    <option value="ow|oa,o-e">ow  vs  oa, o-e</option>
+                    <option value="oo|ew,ue">oo  vs  ew, ue</option>
+                    <option value="ar|or,er">ar  vs  or, er</option>
+                    <option value="or|aw,ar">or  vs  aw, ar</option>
+                    <option value="air|are,ear">air  vs  are, ear</option>
+                    <option value="ir|er,ur">ir  vs  er, ur</option>
+                    <option value="ou|ow,oi">ou  vs  ow, oi</option>
+                    <option value="oy|oi,ou">oy  vs  oi, ou</option>
+                </optgroup>
+                <optgroup label="Set 3 – Alternate Spellings">
+                    <option value="ea|ee,ie">ea  vs  ee, ie</option>
+                    <option value="ai|ay,a-e">ai  vs  ay, a-e</option>
+                    <option value="a-e|ay,ai">a-e  vs  ay, ai</option>
+                    <option value="i-e|igh,ie">i-e  vs  igh, ie</option>
+                    <option value="o-e|ow,oa">o-e  vs  ow, oa</option>
+                    <option value="u-e|oo,ew">u-e  vs  oo, ew</option>
+                    <option value="aw|or,al">aw  vs  or, al</option>
+                    <option value="ur|ir,er">ur  vs  ir, er</option>
+                    <option value="er|ir,ur">er  vs  ir, ur</option>
+                    <option value="oa|ow,o-e">oa  vs  ow, o-e</option>
+                    <option value="ew|oo,u-e">ew  vs  oo, u-e</option>
+                    <option value="oi|oy,ou">oi  vs  oy, ou</option>
+                </optgroup>
+            </select>
+        </div>
+
+        <div class="fg">
+            <label for="targetSound">Target Sound</label>
+            <input type="text" id="targetSound" placeholder="e.g. sh" autocomplete="off">
+        </div>
+        <div class="fg">
+            <label for="distractors">Distractors (comma-separated)</label>
+            <input type="text" id="distractors" placeholder="e.g. ch, s, th" autocomplete="off">
+        </div>
+
+        <hr class="divider">
+        <div class="panel-section-title">Support Scales</div>
+
+        <div class="fg">
+            <label for="verbalSupport">Verbal Support (1–5)</label>
+            <select id="verbalSupport">
+                <option value="5">5 – Full Verbal Support</option>
+                <option value="4">4 – Significant</option>
+                <option value="3">3 – Moderate</option>
+                <option value="2">2 – Minimal</option>
+                <option value="1" selected>1 – Independent</option>
+            </select>
+        </div>
+        <div class="fg">
+            <label for="visualSupport">Visual Support (1–5)</label>
+            <select id="visualSupport">
+                <option value="5">5 – Full Visual Support</option>
+                <option value="4">4 – Significant</option>
+                <option value="3">3 – Moderate</option>
+                <option value="2">2 – Minimal</option>
+                <option value="1" selected>1 – Independent</option>
+            </select>
+        </div>
+
+        <hr class="divider">
+
+        <button class="pb pb-generate" id="generateBtn">▶ Generate Tiles</button>
+        <button class="pb pb-say"      id="sayBtn">🔊 Say Target Sound</button>
+        <button class="pb pb-reset"    id="resetBtn">↺ Reset Tiles</button>
+
+        <hr class="divider">
+        <div class="panel-section-title">Data &amp; Reports</div>
+
+        <button class="pb pb-report" id="reportBtn">📊 View Report</button>
+        <button class="pb pb-print"  id="printBtn">🖨 Print Report</button>
+        <button class="pb pb-danger" id="resetDataBtn">⚠ Reset Session Data</button>
+        <button class="pb pb-admin"  id="adminBtn">⬇ Download All Data (Admin)</button>
+        <button class="pb pb-clear"  id="clearBtn">✕ Clear Board</button>
+
+    </aside>
+
+    <!-- Panel toggle -->
+    <button class="panel-toggle" id="panelToggle" title="Toggle panel">«</button>
+
+    <!-- ── Student View ── -->
+    <main class="student-view">
+
+        <div class="stats-bar">
+            <span class="stat-chip chip-total">Attempts: <span id="statAttempts">0</span></span>
+            <span class="stat-chip chip-correct">Correct: <span id="statCorrect">0</span></span>
+        </div>
+
+        <p class="prompt" id="prompt">Choose a preset or enter a sound, then press <strong>Generate Tiles</strong></p>
+
+        <div class="tiles-area" id="tilesArea"></div>
+
+        <div class="drop-wrapper">
+            <span class="drop-label" id="dropLabel">Drag the matching sound here</span>
+            <div class="drop-zone" id="dropZone">
+                <span class="drop-placeholder">?</span>
+            </div>
+        </div>
+
+    </main>
+
+</div>
+
+<!-- Report Modal -->
+<div class="modal" id="reportModal">
+    <div class="modal-box">
+        <div class="modal-head">
+            <h2>Sound Matching Progress Report</h2>
+            <button class="modal-close" id="modalClose">×</button>
+        </div>
+        <div id="reportContent"></div>
+        <div class="modal-actions">
+            <button class="mb mb-csv"  id="exportCsvBtn">Export CSV</button>
+            <button class="mb mb-copy" id="copyReportBtn">Copy Text</button>
+            <button class="mb mb-prnt" id="printReportBtn">Print</button>
         </div>
     </div>
+</div>
 
-    <div id="reportModal" class="modal">
-        <div class="modal-content">
-            <div class="report-header">
-                <h2>Sound Matching Progress Report</h2>
-                <span class="close-btn" onclick="closeReportModal()">×</span>
-            </div>
-            <div id="reportContent"></div>
-            <div class="report-controls">
-                <button class="report-btn export-csv-btn" onclick="exportReportCSVSMB(false)">Export Current View CSV</button>
-                <button class="report-btn print-report-btn" onclick="printReportSMB()">Print Report</button>
-                <button class="report-btn copy-report-btn" onclick="copyReportTextSMB()">Copy Report Text</button>
-            </div>
-        </div>
-    </div>
+<div class="watermark">M5 Sound Matching Board ©</div>
 
-    <div class="watermark">.</div>
+<script>
+'use strict';
 
-    <script>
-        const reportModalSMB = document.getElementById('reportModal'); // Re-use modal structure
-        let currentTestableSoundSMB = '';
-        let allSoundsPresentedSMB = [];
-        let chosenSoundSMB = null;
-        let progressDataSMB = [];
-        let currentWordHasResultSMB = false;
-        let touchElementSMB = null;
-        let touchStartXSMB = 0, touchStartYSMB = 0;
-        let cloneElementSMB = null;
-        let selectedTileSMB = null;
-        let soundMatchingBoardInitialized = false;
-        let currentAttemptIdSMB = null;
+// ─────────────────────────────────────────────
+//  STATE
+// ─────────────────────────────────────────────
+const STORAGE_KEY = 'm5SoundMatchingProgressData';
 
-        function initializeSoundMatchingBoard() {
-            if (soundMatchingBoardInitialized) return;
-            document.getElementById('generateBtnSMB').onclick = generateSoundsSMB;
-            document.getElementById('resetBtnSMB').onclick = resetCurrentAttemptTilesSMB;
-            document.getElementById('correctBtnSMB').onclick = () => markAccuracySMB(true);
-            document.getElementById('incorrectBtnSMB').onclick = () => markAccuracySMB(false);
-            document.getElementById('reportBtnSMB').onclick = showReportModalSMB;
-            document.getElementById('printBtnSMB').onclick = printCurrentViewSMB;
-            document.getElementById('resetSessionDataBtnSMB').onclick = handleResetSessionDataSMB;
-            document.getElementById('adminDownloadAllDataBtnSMB').onclick = handleAdminDownloadAllDataSMB;
-            document.getElementById('homeBtnSMB').onclick = clearSoundMatchingBoardInterface;
+let currentTarget    = '';
+let allSounds        = [];
+let currentAttemptId = null;
+let progressData     = [];
+let sessionAttempts  = 0;
+let sessionCorrect   = 0;
 
-            const dropZone = document.getElementById('dropZoneSMB');
-            dropZone.ondrop = (e) => dropTileSMB(e);
-            dropZone.ondragover = allowDropSMB;
-            dropZone.ontouchstart = (e) => { e.preventDefault(); handleDropZoneTouchSMB(e); };
-            
-            adjustDropZoneWidthSMB('dropZoneSMB', 1);
+// touch drag state
+let touchTile  = null;
+let touchClone = null;
+let dragSource = null; // mouse drag
 
-            loadProgressDataSMB();
-            soundMatchingBoardInitialized = true;
-            console.log("M5 Sound Matching Board Initialized. Data is stored in the browser.");
-        }
+// ─────────────────────────────────────────────
+//  PHONETIC MAP  (Web Speech API optimised)
+// ─────────────────────────────────────────────
+const PHONETIC = {
+    a:'a. a.',    e:'eh. eh.', i:'ih. ih.', o:'o. o.',  u:'uh. uh.',
+    m:'mmm',      s:'sss',     f:'fff',     l:'lll',     n:'nnn',
+    r:'rrr',      v:'vvv',     z:'zzz',     h:'hhh',
+    d:'duh',      t:'tuh',     p:'puh',     g:'guh',     c:'kuh',
+    k:'kuh',      b:'buh',     j:'juh',     y:'yuh',     w:'wuh',
+    x:'ks. ks.',
+    sh:'shh. shh.', th:'th. th.', ch:'ch. ch.', qu:'kwuh',
+    ng:'ng. ng.', nk:'nk. nk.',
+    ay:'ay. ay.', ee:'ee. ee.', igh:'eye. eye.', ow:'oh. oh.',
+    oo:'oo. oo.', ar:'ar. ar.', or:'or. or.', air:'air. air.',
+    ir:'er. er.', ou:'ow. ow.', oy:'oy. oy.',
+    ea:'ee. ee.', oi:'oy. oy.',
+    'a-e':'ay. ay.', 'i-e':'eye. eye.', 'o-e':'oh. oh.', 'u-e':'yoo. yoo.',
+    aw:'or. or.',  are:'air. air.', ur:'er. er.', er:'er. er.',
+    ai:'ay. ay.',  oa:'oh. oh.',    ew:'yoo. yoo.',
+    ire:'eye er',  ear:'eer. eer.', ure:'yoor. yoor.',
+    tion:'shun. shun.', 'tious/cious':'shus. shus.'
+};
 
-        function generateSoundsSMB() {
-            const testableSoundInput = document.getElementById('testableSoundInputSMB').value.toLowerCase().trim();
-            const distractorSoundsInput = document.getElementById('distractorSoundsInputSMB').value.toLowerCase().trim();
+let preferredVoice = null;
 
-            if (!testableSoundInput) {
-                alert("Please enter a testable sound.");
-                return;
-            }
+function loadVoices() {
+    const voices = speechSynthesis.getVoices();
+    if (!voices.length) return;
+    const preferred = [
+        'Google US English',
+        'Microsoft Aria Online (Natural) - English (United States)',
+        'Microsoft Guy Online (Natural) - English (United States)',
+        'Samantha', 'Alex', 'Karen', 'Daniel'
+    ];
+    for (const name of preferred) {
+        const v = voices.find(v => v.name === name);
+        if (v) { preferredVoice = v; return; }
+    }
+    preferredVoice = voices.find(v => v.lang && v.lang.startsWith('en')) || voices[0];
+}
 
-            let soundsForTiles = [testableSoundInput];
-            if (distractorSoundsInput) {
-                const distractors = distractorSoundsInput.split(',').map(s => s.trim()).filter(s => s !== '');
-                soundsForTiles.push(...distractors);
-            }
-            
-            soundsForTiles = [...new Set(soundsForTiles)];
+if (typeof speechSynthesis !== 'undefined') {
+    loadVoices();
+    speechSynthesis.onvoiceschanged = loadVoices;
+}
 
-            if (soundsForTiles.length === 0) {
-                 alert("No sounds to generate. Please enter a testable sound.");
-                 return;
-            }
-            
-            currentAttemptIdSMB = `attemptSMB-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`;
-            currentTestableSoundSMB = testableSoundInput;
-            allSoundsPresentedSMB = [...soundsForTiles];
-            currentWordHasResultSMB = false;
-            chosenSoundSMB = null;
+function speakSound(sound) {
+    if (!sound || typeof speechSynthesis === 'undefined') return;
+    speechSynthesis.cancel();
+    const text = PHONETIC[sound.toLowerCase()] || sound;
+    const utt  = new SpeechSynthesisUtterance(text);
+    if (preferredVoice) utt.voice = preferredVoice;
+    utt.rate = 0.82;
+    speechSynthesis.speak(utt);
+}
 
-            for (let i = soundsForTiles.length - 1; i > 0; i--) {
-                const j = Math.floor(Math.random() * (i + 1));
-                [soundsForTiles[i], soundsForTiles[j]] = [soundsForTiles[j], soundsForTiles[i]];
-            }
+// ─────────────────────────────────────────────
+//  PANEL TOGGLE
+// ─────────────────────────────────────────────
+const app         = document.getElementById('app');
+const panelToggle = document.getElementById('panelToggle');
 
-            const tilesDiv = document.getElementById('soundTilesSMB');
-            tilesDiv.innerHTML = '';
-            let tileCounter = 0;
-            soundsForTiles.forEach(sound => {
-                const tile = document.createElement('div');
-                tile.className = 'letter-tile';
-                tile.draggable = true;
-                tile.textContent = sound;
-                tile.id = `tile-smb-${currentAttemptIdSMB}-${tileCounter++}`;
-                tile.ondragstart = (e) => dragTileStartSMB(e);
-                tile.addEventListener('touchstart', (e) => handleTileTouchStartSMB(e), { passive: false });
-                tile.addEventListener('touchmove', (e) => handleTileTouchMoveSMB(e), { passive: false });
-                tile.addEventListener('touchend', (e) => handleTileTouchEndSMB(e), { passive: false });
-                tilesDiv.appendChild(tile);
-            });
+panelToggle.addEventListener('click', () => {
+    const hiding = !app.classList.contains('panel-hidden');
+    app.classList.toggle('panel-hidden', hiding);
+    panelToggle.textContent = hiding ? '»' : '«';
+    panelToggle.title       = hiding ? 'Show setup panel' : 'Hide setup panel';
+});
 
-            const dropZone = document.getElementById('dropZoneSMB');
-            dropZone.innerHTML = 'Drag the correct sound here!';
-            dropZone.classList.remove('correct', 'incorrect');
-            if (selectedTileSMB) selectedTileSMB.classList.remove('selected');
-            selectedTileSMB = null;
-            
-            adjustDropZoneWidthSMB('dropZoneSMB', 1);
-        }
-        
-        function adjustDropZoneWidthSMB(dropZoneId, numSlots = 1) {
-            const dropZone = document.getElementById(dropZoneId);
-            if (!dropZone) return;
+// ─────────────────────────────────────────────
+//  PRESETS
+// ─────────────────────────────────────────────
+document.getElementById('presetSelect').addEventListener('change', function() {
+    if (!this.value) return;
+    const [target, distPart] = this.value.split('|');
+    document.getElementById('targetSound').value = target.trim();
+    document.getElementById('distractors').value = (distPart || '').trim();
+});
 
-            let sampleTile = document.querySelector('.letter-tile');
-            let tempAppend = false;
-            if (!sampleTile) {
-                sampleTile = document.createElement('div');
-                sampleTile.className = 'letter-tile';
-                sampleTile.style.visibility = 'hidden';
-                document.body.appendChild(sampleTile);
-                tempAppend = true;
-            }
-            
-            const tileStyle = window.getComputedStyle(sampleTile);
-            const baseTileWidth = parseFloat(tileStyle.width) || 160;
-            
-            if (tempAppend) {
-                sampleTile.remove();
-            }
+// ─────────────────────────────────────────────
+//  GENERATE TILES
+// ─────────────────────────────────────────────
+function generateTiles() {
+    const target  = document.getElementById('targetSound').value.toLowerCase().trim();
+    const distRaw = document.getElementById('distractors').value.toLowerCase().trim();
 
-            const gap = 10;
-            const paddingLR = (parseFloat(window.getComputedStyle(dropZone).paddingLeft) || 0) + 
-                              (parseFloat(window.getComputedStyle(dropZone).paddingRight) || 0) || 40;
-            
-            let requiredWidth = (numSlots * baseTileWidth) + (Math.max(0, numSlots - 1) * gap) + paddingLR;
-            
-            const minWidthCSS = parseFloat(window.getComputedStyle(dropZone).minWidth) || 0;
-            dropZone.style.width = `${Math.max(requiredWidth, minWidthCSS)}px`;
-        }
+    if (!target) { alert('Please enter a target sound.'); return; }
 
-        function resetCurrentAttemptTilesSMB() {
-            const tilesDiv = document.getElementById('soundTilesSMB');
-            const dropZone = document.getElementById('dropZoneSMB');
-            
-            tilesDiv.innerHTML = '';
-            dropZone.innerHTML = 'Drag the correct sound here!';
-            dropZone.classList.remove('correct', 'incorrect');
-            chosenSoundSMB = null;
-            currentWordHasResultSMB = false;
-            if (selectedTileSMB) selectedTileSMB.classList.remove('selected');
-            selectedTileSMB = null;
+    currentTarget    = target;
+    const distractors = distRaw ? distRaw.split(',').map(s => s.trim()).filter(Boolean) : [];
+    allSounds         = [...new Set([target, ...distractors])];
+    currentAttemptId  = `smb-${Date.now()}-${Math.random().toString(36).slice(2, 9)}`;
 
-            if (currentTestableSoundSMB && allSoundsPresentedSMB.length > 0 && currentAttemptIdSMB) {
-                let soundsToRegenerate = [...allSoundsPresentedSMB];
-                for (let i = soundsToRegenerate.length - 1; i > 0; i--) {
-                    const j = Math.floor(Math.random() * (i + 1));
-                    [soundsToRegenerate[i], soundsToRegenerate[j]] = [soundsToRegenerate[j], soundsToRegenerate[i]];
-                }
+    renderTiles([...allSounds].sort(() => Math.random() - 0.5));
+    resetDropZone();
+    document.getElementById('prompt').textContent = 'Drag the matching sound to the box';
+}
 
-                let tileCounter = 0;
-                soundsToRegenerate.forEach(sound => {
-                    const tile = document.createElement('div');
-                    tile.className = 'letter-tile';
-                    tile.draggable = true;
-                    tile.textContent = sound;
-                    tile.id = `tile-smb-${currentAttemptIdSMB}-${tileCounter++}-reset`;
-                    tile.ondragstart = (e) => dragTileStartSMB(e);
-                    tile.addEventListener('touchstart', (e) => handleTileTouchStartSMB(e), { passive: false });
-                    tile.addEventListener('touchmove', (e) => handleTileTouchMoveSMB(e), { passive: false });
-                    tile.addEventListener('touchend', (e) => handleTileTouchEndSMB(e), { passive: false });
-                    tilesDiv.appendChild(tile);
-                });
-            } else {
-                 adjustDropZoneWidthSMB('dropZoneSMB', 1);
-            }
-        }
+function renderTiles(sounds) {
+    const area = document.getElementById('tilesArea');
+    area.innerHTML = '';
+    sounds.forEach(sound => area.appendChild(makeTile(sound)));
+}
 
-        function clearSoundMatchingBoardInterface() {
-            document.getElementById('studentNameSMB').value = '';
-            document.getElementById('adultNameSMB').value = '';
-            document.getElementById('testableSoundInputSMB').value = '';
-            document.getElementById('distractorSoundsInputSMB').value = '';
-            document.getElementById('soundTilesSMB').innerHTML = '';
-            const dropZone = document.getElementById('dropZoneSMB');
-            dropZone.innerHTML = 'Drag the correct sound here!';
-            dropZone.classList.remove('correct', 'incorrect');
-            
-            currentTestableSoundSMB = '';
-            allSoundsPresentedSMB = [];
-            chosenSoundSMB = null;
-            currentAttemptIdSMB = null;
-            currentWordHasResultSMB = false;
-            if (selectedTileSMB) selectedTileSMB.classList.remove('selected');
-            selectedTileSMB = null;
-            document.getElementById('verbalSupportLevelSMB').value = '1';
-            document.getElementById('visualSupportLevelSMB').value = '1';
-            adjustDropZoneWidthSMB('dropZoneSMB', 1); 
-            console.log("Sound Matching Board interface cleared.");
-        }
+function makeTile(sound) {
+    const tile         = document.createElement('div');
+    tile.className     = 'sound-tile';
+    tile.textContent   = sound;
+    tile.dataset.sound = sound;
+    tile.draggable     = true;
 
-        function markAccuracySMB(isCorrectByTeacher) {
-            if (!currentAttemptIdSMB || !currentTestableSoundSMB) {
-                alert("Please generate sounds first before marking correct/incorrect.");
-                return;
-            }
-            if (!chosenSoundSMB) {
-                alert("Please have the student drag a sound to the drop zone before marking.");
-                return;
-            }
+    if (sound.length > 4)      tile.style.fontSize = '34px';
+    else if (sound.length > 3) tile.style.fontSize = '42px';
+    else if (sound.length > 2) tile.style.fontSize = '50px';
 
-            const dropZone = document.getElementById('dropZoneSMB');
-            dropZone.classList.toggle('correct', isCorrectByTeacher);
-            dropZone.classList.toggle('incorrect', !isCorrectByTeacher);
-            currentWordHasResultSMB = true;
-            if (isCorrectByTeacher) launchConfetti();
+    tile.addEventListener('dragstart',  onDragStart);
+    tile.addEventListener('touchstart', onTouchStart, { passive: false });
+    tile.addEventListener('touchmove',  onTouchMove,  { passive: false });
+    tile.addEventListener('touchend',   onTouchEnd,   { passive: false });
 
-            saveProgressSMB(isCorrectByTeacher, currentTestableSoundSMB, chosenSoundSMB, allSoundsPresentedSMB, currentAttemptIdSMB);
-        }
+    return tile;
+}
 
-        function allowDropSMB(ev) { ev.preventDefault(); }
+function resetDropZone() {
+    const dz        = document.getElementById('dropZone');
+    dz.className    = 'drop-zone';
+    dz.innerHTML    = '<span class="drop-placeholder">?</span>';
+    dz.ondrop       = onDrop;
+    dz.ondragover   = onDragOver;
+    dz.ondragleave  = onDragLeave;
+    dz.ontouchstart = e => { e.preventDefault(); if (touchTile) commitDrop(touchTile.dataset.sound, touchTile); };
+}
 
-        function dragTileStartSMB(ev) {
-            ev.dataTransfer.setData("text", ev.target.textContent);
-            ev.dataTransfer.setData("id", ev.target.id);
-        }
+// ─────────────────────────────────────────────
+//  MOUSE DRAG & DROP
+// ─────────────────────────────────────────────
+function onDragStart(e) {
+    dragSource = e.currentTarget;
+    dragSource.classList.add('tile-dragging');
+    e.dataTransfer.setData('sound', dragSource.dataset.sound);
+    e.dataTransfer.effectAllowed = 'move';
+}
 
-        function dropTileSMB(ev) {
-            ev.preventDefault(); ev.stopPropagation();
-            let soundValue, tileId, sourceElement = null;
+document.addEventListener('dragend', () => {
+    if (dragSource) { dragSource.classList.remove('tile-dragging'); dragSource = null; }
+});
 
-            if (ev.dataTransfer && ev.dataTransfer.types.length > 0 && ev.dataTransfer.types.includes("id")) {
-                soundValue = ev.dataTransfer.getData("text");
-                tileId = ev.dataTransfer.getData("id");
-                sourceElement = document.getElementById(tileId);
-            } else if (selectedTileSMB) {
-                soundValue = selectedTileSMB.textContent;
-                tileId = selectedTileSMB.id;
-                sourceElement = selectedTileSMB;
-            } else if (touchElementSMB) {
-                soundValue = touchElementSMB.textContent;
-                tileId = touchElementSMB.id;
-                sourceElement = touchElementSMB;
-            } else {
-                console.warn("Drop event with no clear data source."); return;
-            }
+function onDragOver(e) {
+    e.preventDefault();
+    e.dataTransfer.dropEffect = 'move';
+    document.getElementById('dropZone').classList.add('dz-hover');
+}
 
-            if (!soundValue || !tileId) { console.error("Could not determine sound or tileId for drop."); return; }
+function onDragLeave() {
+    document.getElementById('dropZone').classList.remove('dz-hover');
+}
 
-            const dropZone = document.getElementById('dropZoneSMB');
-            dropZone.innerHTML = '';
+function onDrop(e) {
+    e.preventDefault();
+    document.getElementById('dropZone').classList.remove('dz-hover');
+    const sound = e.dataTransfer.getData('sound') || (dragSource && dragSource.dataset.sound);
+    if (sound) commitDrop(sound, dragSource);
+}
 
-            const newTileInDropZone = document.createElement('div');
-            newTileInDropZone.className = 'letter-tile';
-            newTileInDropZone.textContent = soundValue;
-            newTileInDropZone.setAttribute('data-original-id', tileId);
-            dropZone.appendChild(newTileInDropZone);
-            
-            chosenSoundSMB = soundValue;
+// ─────────────────────────────────────────────
+//  TOUCH DRAG
+// ─────────────────────────────────────────────
+function onTouchStart(e) {
+    e.preventDefault();
+    touchTile = e.currentTarget;
+    touchTile.classList.add('tile-selected');
 
-            if (currentTestableSoundSMB && soundValue.toLowerCase() === currentTestableSoundSMB.toLowerCase()) {
-                dropZone.classList.add('correct');
-                dropZone.classList.remove('incorrect');
-            } else {
-                dropZone.classList.add('incorrect');
-                dropZone.classList.remove('correct');
-            }
+    touchClone = touchTile.cloneNode(true);
+    Object.assign(touchClone.style, {
+        position: 'fixed', opacity: '0.75', zIndex: '9999', pointerEvents: 'none',
+        width: touchTile.offsetWidth + 'px', height: touchTile.offsetHeight + 'px'
+    });
+    const r = touchTile.getBoundingClientRect();
+    touchClone.style.left = r.left + 'px';
+    touchClone.style.top  = r.top  + 'px';
+    document.body.appendChild(touchClone);
+}
 
-            if (sourceElement && sourceElement.parentNode) {
-                sourceElement.remove();
-            }
-            
-            if (cloneElementSMB) cloneElementSMB.remove();
-            cloneElementSMB = null;
-            if (selectedTileSMB) selectedTileSMB.classList.remove('selected');
-            selectedTileSMB = null;
-            touchElementSMB = null;
-        }
-        
-        function handleTileTouchStartSMB(ev) {
-            ev.preventDefault(); ev.stopPropagation();
-            const tile = ev.target.closest('.letter-tile');
-            if (!tile || !tile.parentElement || tile.parentElement.id !== 'soundTilesSMB') {
-                 if (selectedTileSMB) selectedTileSMB.classList.remove('selected'); selectedTileSMB = null; return;
-            }
-            if (selectedTileSMB) {
-                selectedTileSMB.classList.remove('selected');
-                if (cloneElementSMB) cloneElementSMB.remove(); cloneElementSMB = null;
-            }
-            selectedTileSMB = tile; selectedTileSMB.classList.add('selected'); touchElementSMB = tile;
-            const touch = ev.changedTouches[0]; touchStartXSMB = touch.clientX; touchStartYSMB = touch.clientY;
-            
-            let newClone = tile.cloneNode(true);
-            Object.assign(newClone.style, { position: 'absolute', opacity: '0.7', zIndex: '10000', pointerEvents: 'none' });
-            const rect = tile.getBoundingClientRect();
-            Object.assign(newClone.style, { left: `${rect.left}px`, top: `${rect.top}px`, width: `${rect.width}px`, height: `${rect.height}px` });
-            document.body.appendChild(newClone); cloneElementSMB = newClone;
-        }
+function onTouchMove(e) {
+    e.preventDefault();
+    if (!touchClone) return;
+    const t = e.touches[0];
+    touchClone.style.left = (t.clientX - touchClone.offsetWidth  / 2) + 'px';
+    touchClone.style.top  = (t.clientY - touchClone.offsetHeight / 2) + 'px';
+}
 
-        function handleTileTouchMoveSMB(ev) {
-            ev.preventDefault(); ev.stopPropagation();
-            if (!cloneElementSMB || !touchElementSMB) return;
-            const touch = ev.changedTouches[0];
-            cloneElementSMB.style.left = `${touch.clientX - (cloneElementSMB.offsetWidth / 2)}px`;
-            cloneElementSMB.style.top = `${touch.clientY - (cloneElementSMB.offsetHeight / 2)}px`;
-        }
+function onTouchEnd(e) {
+    e.preventDefault();
+    if (!touchTile) return;
 
-        function handleTileTouchEndSMB(ev) {
-            ev.preventDefault(); ev.stopPropagation();
-            if (!touchElementSMB || !cloneElementSMB) {
-                if(cloneElementSMB) cloneElementSMB.remove(); cloneElementSMB = null; touchElementSMB = null; return;
-            }
-            const touch = ev.changedTouches[0]; const dropZone = document.getElementById('dropZoneSMB');
-            cloneElementSMB.style.visibility = 'hidden';
-            const elementUnderneath = document.elementFromPoint(touch.clientX, touch.clientY);
-            cloneElementSMB.style.visibility = 'visible';
+    const t  = e.changedTouches[0];
+    if (touchClone) touchClone.style.visibility = 'hidden';
+    const el = document.elementFromPoint(t.clientX, t.clientY);
+    if (touchClone) touchClone.style.visibility = 'visible';
 
-            if (elementUnderneath && (elementUnderneath === dropZone || dropZone.contains(elementUnderneath))) {
-                if (selectedTileSMB !== touchElementSMB && touchElementSMB.classList.contains('letter-tile')) {
-                    if(selectedTileSMB) selectedTileSMB.classList.remove('selected');
-                    selectedTileSMB = touchElementSMB; selectedTileSMB.classList.add('selected');
-                }
-                dropTileSMB(ev);
-            } else {
-                if (selectedTileSMB === touchElementSMB) { 
-                    selectedTileSMB.classList.remove('selected');
-                    selectedTileSMB = null;
-                }
-            }
-            cloneElementSMB.remove(); cloneElementSMB = null; touchElementSMB = null;
-        }
+    const dz = document.getElementById('dropZone');
+    if (el && (el === dz || dz.contains(el))) {
+        commitDrop(touchTile.dataset.sound, touchTile);
+    }
 
-        function handleDropZoneTouchSMB(ev) {
-            ev.stopPropagation();
-            if (selectedTileSMB && selectedTileSMB.parentElement && selectedTileSMB.parentElement.id === 'soundTilesSMB') {
-                dropTileSMB(ev);
-            } else if (selectedTileSMB) {
-                selectedTileSMB.classList.remove('selected');
-                selectedTileSMB = null;
-            }
-        }
-        
-        // --- DATA MANAGEMENT (LOCAL STORAGE) ---
+    if (touchClone) { touchClone.remove(); touchClone = null; }
+    if (touchTile)  { touchTile.classList.remove('tile-selected', 'tile-dragging'); touchTile = null; }
+}
 
-        function saveProgressSMB(isCorrect, testableSound, chosenSnd, allSounds, attemptId) {
-            const studentName = document.getElementById('studentNameSMB').value.trim();
-            const adultName = document.getElementById('adultNameSMB').value.trim();
-            const verbalSupportSelect = document.getElementById('verbalSupportLevelSMB');
-            const visualSupportSelect = document.getElementById('visualSupportLevelSMB');
+// ─────────────────────────────────────────────
+//  COMMIT DROP  (shared mouse + touch path)
+// ─────────────────────────────────────────────
+function commitDrop(sound, sourceTile) {
+    if (!currentTarget) return;
 
-            if (!attemptId) {
-                alert("Error: Cannot save progress without an active attempt ID. Please generate sounds first.");
-                return;
-            }
+    const isCorrect = sound.toLowerCase() === currentTarget.toLowerCase();
+    const dz        = document.getElementById('dropZone');
 
-            const entryData = {
-                studentName: studentName || "N/A",
-                adultName: adultName || "N/A",
-                testableSound: testableSound,
-                chosenSound: chosenSnd || "N/A",
-                allSoundsPresented: allSounds || [],
-                timestamp: new Date().toISOString(),
-                verbalSupportLevel: verbalSupportSelect.value,
-                verbalSupportDescription: verbalSupportSelect.options[verbalSupportSelect.selectedIndex].text,
-                visualSupportLevel: visualSupportSelect.value,
-                visualSupportDescription: visualSupportSelect.options[visualSupportSelect.selectedIndex].text,
-                accuracy: isCorrect,
-                sourceView: "SMB",
-                attemptId: attemptId
-            };
+    // Place tile in drop zone
+    dz.innerHTML = '';
+    const placed         = makeTile(sound);
+    placed.style.cursor  = 'default';
+    placed.draggable     = false;
+    placed.classList.remove('tile-dragging', 'tile-selected');
+    placed.removeEventListener('dragstart',  onDragStart);
+    placed.removeEventListener('touchstart', onTouchStart);
+    placed.removeEventListener('touchmove',  onTouchMove);
+    placed.removeEventListener('touchend',   onTouchEnd);
+    dz.appendChild(placed);
+    dz.classList.remove('dz-hover');
+    dz.classList.toggle('dz-correct',   isCorrect);
+    dz.classList.toggle('dz-incorrect', !isCorrect);
 
-            progressDataSMB.push(entryData);
-            progressDataSMB.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+    // Remove source from tiles area
+    if (sourceTile && sourceTile.parentNode === document.getElementById('tilesArea')) {
+        sourceTile.remove();
+    }
 
-            try {
-                localStorage.setItem('m5SoundMatchingProgressData', JSON.stringify(progressDataSMB));
-                console.log("Sound Matching progress saved to browser's local storage.");
-            } catch (e) {
-                console.error("Error saving Sound Matching progress to local storage:", e);
-                alert("Error saving progress. The browser's storage might be full.");
-            }
-        }
+    // Audio + confetti feedback
+    if (isCorrect) {
+        speakSound(sound);
+        launchConfetti();
+    } else {
+        speakSound(currentTarget);
+    }
 
-        function loadProgressDataSMB() {
-            console.log("Attempting to load Sound Matching progress data from local storage...");
-            try {
-                const storedData = localStorage.getItem('m5SoundMatchingProgressData');
-                if (storedData) {
-                    progressDataSMB = JSON.parse(storedData);
-                    console.log("Sound Matching progress data loaded. Count:", progressDataSMB.length);
-                } else {
-                    progressDataSMB = [];
-                    console.log("No saved Sound Matching data found in local storage.");
-                }
-            } catch (error) {
-                console.error("Error loading Sound Matching progress data from local storage: ", error);
-                alert("Could not load progress data. Saved data might be corrupt.");
-                progressDataSMB = [];
-            }
-        }
+    // Update session counters
+    sessionAttempts++;
+    if (isCorrect) sessionCorrect++;
+    document.getElementById('statAttempts').textContent = sessionAttempts;
+    document.getElementById('statCorrect').textContent  = sessionCorrect;
 
-        function handleResetSessionDataSMB() {
-            if (confirm("Are you sure you want to reset all session data? This will delete all saved records from this browser and cannot be undone.")) {
-                try {
-                    localStorage.removeItem('m5SoundMatchingProgressData');
-                    progressDataSMB = [];
-                    clearSoundMatchingBoardInterface();
-                    alert("All Sound Matching session data has been reset from the browser's storage.");
-                    closeReportModal();
-                } catch (error) {
-                    console.error("Error resetting Sound Matching session data: ", error);
-                    alert("Error resetting data. Check console for errors.");
-                }
-            }
-        }
+    // Save to storage
+    saveProgress(isCorrect, sound);
+}
 
-        function handleAdminDownloadAllDataSMB() {
-            const password = prompt("To download all Sound Matching data, enter admin password:", "");
-            if (password === "1234") {
-                loadProgressDataSMB();
-                exportReportCSVSMB(true);
-            } else if (password !== null) {
-                alert("Incorrect admin password.");
-            }
-        }
-        
-        // --- REPORTING AND UTILITY FUNCTIONS ---
+// ─────────────────────────────────────────────
+//  RESET TILES
+// ─────────────────────────────────────────────
+function resetTiles() {
+    if (!currentTarget || !allSounds.length) return;
+    currentAttemptId = `smb-${Date.now()}-${Math.random().toString(36).slice(2, 9)}`;
+    renderTiles([...allSounds].sort(() => Math.random() - 0.5));
+    resetDropZone();
+}
 
-        function formatDate(isoString) {
-            if (!isoString) return 'N/A';
-            const date = new Date(isoString);
-            return date.toLocaleString('en-US', { year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', hour12: true });
-        }
+// ─────────────────────────────────────────────
+//  PERSISTENCE
+// ─────────────────────────────────────────────
+function saveProgress(isCorrect, chosenSound) {
+    const vSel   = document.getElementById('verbalSupport');
+    const visSel = document.getElementById('visualSupport');
 
-        function copyToClipboard(text, message = 'Copied!') {
-            if (navigator.clipboard && navigator.clipboard.writeText) {
-                navigator.clipboard.writeText(text).then(() => alert(message))
-                    .catch(err => { fallbackCopyToClipboard(text, message); });
-            } else { fallbackCopyToClipboard(text, message); }
-        }
-        function fallbackCopyToClipboard(text, message) {
-            const ta = document.createElement('textarea');
-            ta.value = text;
-            Object.assign(ta.style, { position: 'fixed', top: '0', left: '0', opacity: '0' });
-            document.body.appendChild(ta);
-            ta.select();
-            try {
-                if (document.execCommand('copy')) alert(message); else alert('Fallback copy failed.');
-            } catch (err) { alert('Fallback copy error.'); }
-            document.body.removeChild(ta);
-        }
+    progressData.push({
+        attemptId:               currentAttemptId,
+        studentName:             document.getElementById('studentName').value.trim() || 'N/A',
+        adultName:               document.getElementById('adultName').value.trim()   || 'N/A',
+        testableSound:           currentTarget,
+        chosenSound:             chosenSound,
+        allSoundsPresented:      [...allSounds],
+        timestamp:               new Date().toISOString(),
+        verbalSupportLevel:      vSel.value,
+        verbalSupportDescription:vSel.options[vSel.selectedIndex].text,
+        visualSupportLevel:      visSel.value,
+        visualSupportDescription:visSel.options[visSel.selectedIndex].text,
+        accuracy:                isCorrect,
+        sourceView:              'SMB'
+    });
 
-        function showReportModalSMB() {
-            loadProgressDataSMB();
-            const rc = document.getElementById('reportContent'); rc.innerHTML = '';
-            if (progressDataSMB.length === 0) {
-                rc.innerHTML = '<p class="no-data-message">No Sound Matching data to report.</p>';
-            } else {
-                let tableHTML = `<table class="report-table"><thead><tr>` +
-                                `<th>#</th><th>Student</th><th>Adult</th><th>Testable Sound</th><th>Chosen Sound</th>` +
-                                `<th>Date</th><th>Verbal</th><th>Visual</th><th>Result</th>` +
-                                `</tr></thead><tbody>`;
-                progressDataSMB.forEach((e, i) => {
-                    tableHTML += `<tr><td>${i+1}</td>` +
-                                 `<td>${e.studentName}</td><td>${e.adultName}</td>` +
-                                 `<td>${e.testableSound}</td><td>${e.chosenSound}</td>` +
-                                 `<td class="formatted-date">${formatDate(e.timestamp)}</td>` +
-                                 `<td>${e.verbalSupportDescription}</td><td>${e.visualSupportDescription}</td>` +
-                                 `<td class="${e.accuracy?'report-status-correct':'report-status-incorrect'}">${e.accuracy?'Correct':'Incorrect'}</td></tr>`;
-                });
-                tableHTML += `</tbody></table>`; rc.innerHTML = tableHTML;
-            }
-            reportModalSMB.style.display = 'block';
-        }
+    progressData.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
 
-        function closeReportModal() {
-             const modalToClose = document.getElementById('reportModal');
-             if(modalToClose) modalToClose.style.display = 'none';
-        }
-        
-        function generateReportTextSMB() {
-            if (progressDataSMB.length === 0) return "No Sound Matching progress data available.";
-            let reportText = "M5 Sound Matching Progress Report\n\n" +
-                             "# | Student | Adult | Testable Sound | Chosen Sound | Date & Time | Verbal Support | Visual Support | Result\n" +
-                             Array(160).join("-") + "\n";
-            progressDataSMB.forEach((entry, index) => {
-                reportText += `${String(index + 1).padEnd(2)} | ` +
-                              `${String(entry.studentName).padEnd(15)} | ` +
-                              `${String(entry.adultName).padEnd(10)} | ` +
-                              `${String(entry.testableSound).padEnd(15)} | ` +
-                              `${String(entry.chosenSound).padEnd(12)} | ` +
-                              `${formatDate(entry.timestamp).padEnd(22)} | ` +
-                              `${entry.verbalSupportDescription.padEnd(30)} | ` +
-                              `${entry.visualSupportDescription.padEnd(30)} | ` +
-                              `${(entry.accuracy ? 'Correct' : 'Incorrect')}\n`;
-            });
-            return reportText;
-        }
+    try {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(progressData));
+    } catch (e) {
+        console.error('localStorage write failed:', e);
+    }
+}
 
-        function copyReportTextSMB() {
-            const reportText = generateReportTextSMB();
-            if (reportText.startsWith("No")) { alert(reportText); return; }
-            copyToClipboard(reportText, "Sound Matching report text copied.");
-        }
+function loadProgress() {
+    try {
+        const raw  = localStorage.getItem(STORAGE_KEY);
+        progressData = raw ? JSON.parse(raw) : [];
+    } catch (e) {
+        progressData = [];
+    }
+}
 
-        function exportReportCSVSMB(isMasterLog = false) {
-            if (progressDataSMB.length === 0) { alert('No Sound Matching data to export.'); return; }
-            const fmt = (f) => `"${String(f==null?'':f).replace(/"/g,'""')}"`;
-            let csv = '';
-            const hdrs = isMasterLog
-                ? ['#','Student','Adult','Testable Sound','Chosen Sound','All Sounds Presented','Date','Verbal Support','Visual Support','Result','Attempt ID']
-                : ['#','Student','Adult','Testable Sound','Chosen Sound','Date','Verbal Support','Visual Support','Result'];
-            csv += hdrs.map(fmt).join(',') + '\n';
-            
-            progressDataSMB.forEach((e, i) => {
-                let r = [i+1, e.studentName, e.adultName, e.testableSound, e.chosenSound];
-                if(isMasterLog) {
-                    r.push(Array.isArray(e.allSoundsPresented) ? e.allSoundsPresented.join('; ') : '');
-                }
-                r.push(formatDate(e.timestamp), e.verbalSupportDescription, e.visualSupportDescription, (e.accuracy?'Correct':'Incorrect'));
-                if(isMasterLog){
-                    r.push(e.attemptId || 'N/A');
-                }
-                csv+=r.map(fmt).join(',')+'\n';
-            });
-            const blob=new Blob([csv],{type:'text/csv;charset=utf-8;'});
-            const link=document.createElement('a');
-            const fn=isMasterLog?'m5_sound_matching_master_log.csv':'m5_sound_matching_report.csv';
-            if(navigator.msSaveBlob){navigator.msSaveBlob(blob,fn);}
-            else{
-                const url=URL.createObjectURL(blob);
-                link.href=url;link.download=fn;
-                document.body.appendChild(link);link.click();
-                document.body.removeChild(link);URL.revokeObjectURL(url);
-            }
-        }
-        
-        function printReportSMB() {
-            window.print();
-        }
-        function printCurrentViewSMB() {
-            showReportModalSMB(); 
-            setTimeout(window.print, 300);
-        }
+// ─────────────────────────────────────────────
+//  REPORTING
+// ─────────────────────────────────────────────
+function fmtDate(iso) {
+    if (!iso) return 'N/A';
+    return new Date(iso).toLocaleString('en-US', {
+        year: 'numeric', month: '2-digit', day: '2-digit',
+        hour: '2-digit', minute: '2-digit', hour12: true
+    });
+}
 
-        function launchConfetti() {
-            const cont = document.body;
-            for(let i=0;i<60;i++){
-                const p=document.createElement('div');
-                const size = Math.random()*10+5;
-                p.style.cssText=`position:fixed;left:${Math.random()*100}vw;top:${Math.random()*-60+0}vh;width:${size}px;height:${size}px;background:hsl(${Math.random()*360},100%,60%);opacity:.9;z-index:10001;border-radius:${Math.random()>0.5?'50%':'0'};transform:rotate(${Math.random()*360}deg);`;
-                cont.appendChild(p);
-                p.animate([
-                    {transform:`translateY(0) rotate(${Math.random()*360}deg)`,opacity:1},
-                    {transform:`translateY(130vh) rotate(${Math.random()*1000+360}deg)`,opacity:0}
-                ],{duration:Math.random()*2500+3500,easing:'cubic-bezier(0.1,0.5,0.5,1)',delay:Math.random()*300,iterations:1,fill:'forwards'});
-                setTimeout(()=>p.remove(),6500);
-            }
-        }
+function showReport() {
+    loadProgress();
+    const rc = document.getElementById('reportContent');
 
-        // Initialize the Application
-        initializeSoundMatchingBoard();
+    if (!progressData.length) {
+        rc.innerHTML = '<p class="no-data">No data recorded yet.</p>';
+    } else {
+        let html = `<table class="report-table"><thead><tr>
+            <th>#</th><th>Student</th><th>Adult</th>
+            <th>Target</th><th>Chosen</th><th>Date</th>
+            <th>Verbal</th><th>Visual</th><th>Result</th>
+        </tr></thead><tbody>`;
+        progressData.forEach((e, i) => {
+            html += `<tr>
+                <td>${i + 1}</td>
+                <td>${e.studentName}</td><td>${e.adultName}</td>
+                <td>${e.testableSound}</td><td>${e.chosenSound}</td>
+                <td class="ws-nowrap">${fmtDate(e.timestamp)}</td>
+                <td>${e.verbalSupportDescription}</td>
+                <td>${e.visualSupportDescription}</td>
+                <td class="${e.accuracy ? 'ok' : 'err'}">${e.accuracy ? 'Correct' : 'Incorrect'}</td>
+            </tr>`;
+        });
+        html += '</tbody></table>';
+        rc.innerHTML = html;
+    }
 
-    </script>
+    document.getElementById('reportModal').style.display = 'block';
+}
+
+function closeModal() {
+    document.getElementById('reportModal').style.display = 'none';
+}
+
+function exportCSV(isMaster = false) {
+    if (!progressData.length) { alert('No data to export.'); return; }
+    const q = s => `"${String(s ?? '').replace(/"/g, '""')}"`;
+    const hdrs = isMaster
+        ? ['#','Student','Adult','Target Sound','Chosen Sound','All Sounds Presented','Date','Verbal','Visual','Result','Attempt ID']
+        : ['#','Student','Adult','Target Sound','Chosen Sound','Date','Verbal','Visual','Result'];
+    let csv = hdrs.map(q).join(',') + '\n';
+
+    progressData.forEach((e, i) => {
+        const row = [i + 1, e.studentName, e.adultName, e.testableSound, e.chosenSound];
+        if (isMaster) row.push(Array.isArray(e.allSoundsPresented) ? e.allSoundsPresented.join('; ') : '');
+        row.push(fmtDate(e.timestamp), e.verbalSupportDescription, e.visualSupportDescription, e.accuracy ? 'Correct' : 'Incorrect');
+        if (isMaster) row.push(e.attemptId || 'N/A');
+        csv += row.map(q).join(',') + '\n';
+    });
+
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+    const a    = document.createElement('a');
+    a.href     = URL.createObjectURL(blob);
+    a.download = isMaster ? 'm5_smb_master_log.csv' : 'm5_sound_matching_report.csv';
+    document.body.appendChild(a); a.click();
+    document.body.removeChild(a); URL.revokeObjectURL(a.href);
+}
+
+function copyReport() {
+    if (!progressData.length) { alert('No data to copy.'); return; }
+    let text = 'M5 Sound Matching Progress Report\n\n';
+    text += '# | Student | Adult | Target | Chosen | Date | Verbal | Visual | Result\n';
+    text += '-'.repeat(120) + '\n';
+    progressData.forEach((e, i) => {
+        text += [i + 1, e.studentName, e.adultName, e.testableSound, e.chosenSound,
+                 fmtDate(e.timestamp), e.verbalSupportDescription, e.visualSupportDescription,
+                 e.accuracy ? 'Correct' : 'Incorrect'].join(' | ') + '\n';
+    });
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(text).then(() => alert('Report copied to clipboard.'));
+    } else {
+        const ta = Object.assign(document.createElement('textarea'), {
+            value: text, style: 'position:fixed;opacity:0'
+        });
+        document.body.appendChild(ta); ta.select();
+        document.execCommand('copy'); document.body.removeChild(ta);
+        alert('Report copied to clipboard.');
+    }
+}
+
+// ─────────────────────────────────────────────
+//  CONFETTI
+// ─────────────────────────────────────────────
+function launchConfetti() {
+    for (let i = 0; i < 60; i++) {
+        const p    = document.createElement('div');
+        const size = Math.random() * 10 + 5;
+        p.style.cssText = `position:fixed;left:${Math.random() * 100}vw;top:${Math.random() * -60}vh;`
+            + `width:${size}px;height:${size}px;background:hsl(${Math.random() * 360},100%,60%);`
+            + `opacity:.9;z-index:10001;border-radius:${Math.random() > .5 ? '50%' : '0'};`
+            + `transform:rotate(${Math.random() * 360}deg);pointer-events:none;`;
+        document.body.appendChild(p);
+        p.animate([
+            { transform: `translateY(0) rotate(${Math.random() * 360}deg)`, opacity: 1 },
+            { transform: `translateY(130vh) rotate(${Math.random() * 1000 + 360}deg)`, opacity: 0 }
+        ], {
+            duration: Math.random() * 2500 + 3500,
+            easing: 'cubic-bezier(0.1,0.5,0.5,1)',
+            delay: Math.random() * 300,
+            fill: 'forwards'
+        });
+        setTimeout(() => p.remove(), 6500);
+    }
+}
+
+// ─────────────────────────────────────────────
+//  BUTTON WIRING
+// ─────────────────────────────────────────────
+document.getElementById('generateBtn').onclick = generateTiles;
+
+document.getElementById('sayBtn').onclick = () =>
+    speakSound(document.getElementById('targetSound').value.trim());
+
+document.getElementById('resetBtn').onclick = resetTiles;
+
+document.getElementById('reportBtn').onclick = showReport;
+
+document.getElementById('printBtn').onclick = () => {
+    showReport();
+    setTimeout(() => window.print(), 300);
+};
+
+document.getElementById('modalClose').onclick  = closeModal;
+document.getElementById('exportCsvBtn').onclick = () => exportCSV(false);
+document.getElementById('copyReportBtn').onclick = copyReport;
+document.getElementById('printReportBtn').onclick = () => window.print();
+
+document.getElementById('resetDataBtn').onclick = () => {
+    if (!confirm('Delete all saved session data? This cannot be undone.')) return;
+    localStorage.removeItem(STORAGE_KEY);
+    progressData    = [];
+    sessionAttempts = 0;
+    sessionCorrect  = 0;
+    document.getElementById('statAttempts').textContent = '0';
+    document.getElementById('statCorrect').textContent  = '0';
+    closeModal();
+    alert('Session data cleared.');
+};
+
+document.getElementById('adminBtn').onclick = () => {
+    const pw = prompt('Admin password:');
+    if (pw === '1234') { loadProgress(); exportCSV(true); }
+    else if (pw !== null) alert('Incorrect password.');
+};
+
+document.getElementById('clearBtn').onclick = () => {
+    ['studentName','adultName','targetSound','distractors'].forEach(id => {
+        document.getElementById(id).value = '';
+    });
+    document.getElementById('presetSelect').value  = '';
+    document.getElementById('verbalSupport').value = '1';
+    document.getElementById('visualSupport').value = '1';
+    document.getElementById('tilesArea').innerHTML = '';
+    document.getElementById('prompt').textContent  = 'Choose a preset or enter a sound, then press Generate Tiles';
+    currentTarget = ''; allSounds = []; currentAttemptId = null;
+    resetDropZone();
+};
+
+// Close modal on backdrop click
+document.getElementById('reportModal').addEventListener('click', function(e) {
+    if (e.target === this) closeModal();
+});
+
+// Enter key on text inputs triggers generate
+['targetSound', 'distractors'].forEach(id => {
+    document.getElementById(id).addEventListener('keydown', e => {
+        if (e.key === 'Enter') generateTiles();
+    });
+});
+
+// ─────────────────────────────────────────────
+//  INIT
+// ─────────────────────────────────────────────
+loadProgress();
+</script>
 </body>
 </html>
