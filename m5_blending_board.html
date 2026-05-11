@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>M5 Blending Board</title>
+    <title>M6 Blending Board</title>
     <style>
         body {
             font-family: 'Sassoon Primary', 'Comic Sans MS', Arial, sans-serif;
@@ -26,7 +26,7 @@
             z-index: 1000;
         }
 
-        /* M5 Blending Board Styles */
+        /* M6 Blending Board Styles */
         .blending-board {
             display: flex;
             height: 100vh;
@@ -429,7 +429,7 @@
             <div class="form-group"><button id="homeBtnBB" class="bb-button">Clear Current Board</button></div>
         </div>
         <div class="student-view">
-            <h1>M5 Blending Board</h1>
+            <h1>M6 Blending Board</h1>
              <button id="repeatWordBtn" class="bb-button" style="display: none; margin: 0 auto 20px; width: 200px;">Repeat the Word</button>
             <div class="letter-tiles" id="letterTilesBB"></div>
             <div class="drop-zone" id="dropZoneBB">Drag or tap letters here!</div>
@@ -546,7 +546,7 @@
             loadProgressDataBB();
 
             blendingBoardInitialized = true;
-            console.log("M5 Blending Board Initialized. Data is stored in the browser.");
+            console.log("M6 Blending Board Initialized. Data is stored in the browser.");
         }
         
         function toggleControls() {
@@ -870,7 +870,7 @@
             progressDataBB.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
             
             try {
-                localStorage.setItem('m5BlendingBoardProgressData', JSON.stringify(progressDataBB));
+                localStorage.setItem('M6BlendingBoardProgressData', JSON.stringify(progressDataBB));
                 console.log("Blending Board progress saved to browser's local storage.");
             } catch (e) {
                 console.error("Error saving Blending Board progress to local storage:", e);
@@ -881,7 +881,7 @@
         function loadProgressDataBB() {
             console.log("Attempting to load Blending Board progress data from local storage...");
             try {
-                const storedData = localStorage.getItem('m5BlendingBoardProgressData');
+                const storedData = localStorage.getItem('M6BlendingBoardProgressData');
                 if (storedData) {
                     progressDataBB = JSON.parse(storedData);
                     console.log("Blending Board progress data loaded. Count:", progressDataBB.length);
@@ -899,7 +899,7 @@
         function handleResetSessionDataBB() {
             if (confirm("Are you sure you want to reset all session data? This will delete all saved records from this browser and cannot be undone.")) {
                 try {
-                    localStorage.removeItem('m5BlendingBoardProgressData');
+                    localStorage.removeItem('M6BlendingBoardProgressData');
                     progressDataBB = [];
                     clearBlendingBoardInterface();
                     alert("All Blending Board session data has been reset from the browser's storage.");
@@ -988,7 +988,7 @@
 
         function generateReportText(isMasterLog = false) {
             if (progressDataBB.length === 0) return "No Blending Board progress data available.";
-            let reportText = "M5 Blending Board Progress Report\n\n";
+            let reportText = "M6 Blending Board Progress Report\n\n";
             const headers = isMasterLog 
                 ? ["#", "Student", "Adult", "Word", "Date & Time", "Verbal Support", "Visual Support", "Result", "Attempt ID"] 
                 : ["#", "Student", "Adult", "Word", "Date & Time", "Verbal Support", "Visual Support", "Result"];
@@ -1066,7 +1066,7 @@
             });
             const blob=new Blob([csv],{type:'text/csv;charset=utf-8;'});
             const link=document.createElement('a');
-            const fn=isMasterLog?'m5_blending_board_master_log.csv':'m5_blending_board_report.csv';
+            const fn=isMasterLog?'M6_blending_board_master_log.csv':'M6_blending_board_report.csv';
             if(navigator.msSaveBlob){navigator.msSaveBlob(blob,fn);}
             else{
                 const url=URL.createObjectURL(blob);
